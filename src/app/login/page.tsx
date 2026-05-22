@@ -3,27 +3,69 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Flame, Mail, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Flame, Mail, ArrowRight, ArrowLeft, Lock, User } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isLogin, setIsLogin] = useState(true);
   
   const supabase = createClient();
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !password) return;
 
     setLoading(true);
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setMessage({ type: 'error', text: error.message });
+      } else {
+        setMessage({
+          type: 'success',
+          text: 'Login successful! Redirecting...',
+        });
+        // Get return_to from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('return_to');
+        if (returnTo) {
+          window.location.href = returnTo;
+        } else {
+          window.location.href = '/';
+        }
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !name) return;
+
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            name: name.trim(),
+          },
         },
       });
 
@@ -32,8 +74,9 @@ export default function LoginPage() {
       } else {
         setMessage({
           type: 'success',
-          text: 'Magic login link sent! Check your inbox to complete sign in.',
+          text: 'Registration successful! You can now log in.',
         });
+        setIsLogin(true);
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'An unexpected error occurred.' });
@@ -89,8 +132,28 @@ export default function LoginPage() {
               ATHLETE <span className="gold-gradient-text">PORTAL</span>
             </h1>
             <p className="font-barlow text-sm text-gray-400 uppercase tracking-wider mt-2">
-              Sign in or create your account instantly
+              {isLogin ? 'Sign in to your account' : 'Create your account'}
             </p>
+          </div>
+
+          {/* Toggle between Login and Register */}
+          <div className="flex bg-black/50 rounded p-1">
+            <button
+              onClick={() => { setIsLogin(true); setMessage(null); setEmail(''); setPassword(''); setName(''); }}
+              className={`flex-1 py-2 text-xs font-barlow font-bold uppercase tracking-wider rounded transition-all duration-300 ${
+                isLogin ? 'gold-gradient-bg text-black' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => { setIsLogin(false); setMessage(null); setEmail(''); setPassword(''); setName(''); }}
+              className={`flex-1 py-2 text-xs font-barlow font-bold uppercase tracking-wider rounded transition-all duration-300 ${
+                !isLogin ? 'gold-gradient-bg text-black' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Register
+            </button>
           </div>
 
           {/* Messages */}
@@ -106,36 +169,126 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* OTP Magic Link Form */}
-          <form onSubmit={handleMagicLink} className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  disabled={loading}
-                  className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
-                />
+          {/* Login Form */}
+          {isLogin ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="email" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    disabled={loading}
+                    className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
+                  />
+                </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full gold-gradient-bg text-black font-barlow text-base font-black uppercase tracking-wider py-3.5 rounded hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 cursor-pointer"
-            >
-              <span>{loading ? 'Sending Magic Link...' : 'Send Magic Link'}</span>
-              {!loading && <ArrowRight className="w-4 h-4" />}
-            </button>
-          </form>
+              <div className="space-y-1.5">
+                <label htmlFor="password" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full gold-gradient-bg text-black font-barlow text-base font-black uppercase tracking-wider py-3.5 rounded hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+                {!loading && <ArrowRight className="w-4 h-4" />}
+              </button>
+            </form>
+          ) : (
+            /* Register Form */
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="name" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    disabled={loading}
+                    className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="reg-email" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    id="reg-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    disabled={loading}
+                    className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="reg-password" className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    id="reg-password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    className="bg-black/50 border border-white/10 text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:border-gold-premium w-full text-sm font-inter transition-colors duration-300"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full gold-gradient-bg text-black font-barlow text-base font-black uppercase tracking-wider py-3.5 rounded hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+                {!loading && <ArrowRight className="w-4 h-4" />}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>
