@@ -173,11 +173,8 @@ BEGIN
     ),
     new.email,
     new.raw_user_meta_data->>'avatar_url',
-    -- Default first admin user, or email matching admin/naushad to admin role, others to user
-    CASE 
-      WHEN new.email = 'admin@yourdomain.com' OR new.email LIKE '%admin%' OR new.email LIKE '%naushad%' THEN 'admin'::varchar 
-      ELSE 'user'::varchar 
-    END
+    -- Default all users to 'user' role - admin role must be manually assigned
+    'user'::varchar 
   );
   RETURN new;
 END;
@@ -277,3 +274,13 @@ CREATE POLICY "Allow users to read own ID proofs" ON storage.objects FOR SELECT 
 
 -- Allow admins full access to all storage objects
 CREATE POLICY "Allow admins full access to storage" ON storage.objects FOR ALL TO authenticated USING (public.is_admin());
+
+
+-- 5. Admin User Setup
+-- To create an admin user, follow these steps:
+-- 1. Create the user via Supabase Dashboard -> Authentication -> Users
+-- 2. After user is created, run: UPDATE public.users SET role = 'admin' WHERE email = 'user@example.com';
+-- 3. Or use the setup_admin.sql script for detailed instructions
+
+-- Example: Set specific email as admin (uncomment and modify as needed)
+-- UPDATE public.users SET role = 'admin' WHERE email = 'shaikhnaushuu78636@gmail.com';
