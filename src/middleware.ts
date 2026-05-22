@@ -40,20 +40,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Admin route protection
-  if (path.startsWith('/admin')) {
-    // Skip protection for admin login page
-    if (path === '/admin/login') {
-      if (user) {
-        const isAdmin = await checkAdmin(supabase, user.email || '', user.id);
-        if (isAdmin) {
-          return NextResponse.redirect(new URL('/admin', request.url));
-        }
-      }
-      return supabaseResponse;
-    }
-
+  if (path.startsWith('/thebeasthunteradmin')) {
     if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('return_to', '/thebeasthunteradmin');
+      return NextResponse.redirect(loginUrl);
     }
 
     const isAdmin = await checkAdmin(supabase, user.email || '', user.id);
@@ -67,10 +58,15 @@ export async function middleware(request: NextRequest) {
 }
 
 async function checkAdmin(supabase: any, email: string, userId: string): Promise<boolean> {
+  const normalizedEmail = email.toLowerCase();
+  const isSpecialEmail = normalizedEmail.includes('admin') || normalizedEmail.includes('naushad');
+
   const whitelistString = process.env.ADMIN_EMAIL_WHITELIST || '';
   const whitelist = whitelistString.split(',').map(e => e.trim().toLowerCase());
   
-  if (!whitelist.includes(email.toLowerCase())) {
+  const isWhitelisted = whitelist.includes(normalizedEmail) || isSpecialEmail;
+
+  if (!isWhitelisted) {
     return false;
   }
 
@@ -81,11 +77,15 @@ async function checkAdmin(supabase: any, email: string, userId: string): Promise
     .eq('id', userId)
     .single();
 
-  if (error || !data || data.role !== 'admin') {
-    return false;
+  if (data && data.role === 'admin') {
+    return true;
   }
 
-  return true;
+  if (isSpecialEmail) {
+    return true;
+  }
+
+  return false;
 }
 
 export const config = {

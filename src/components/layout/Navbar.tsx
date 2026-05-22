@@ -71,7 +71,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {isAdmin && (
               <Link
-                href="/admin"
+                href="/thebeasthunteradmin"
                 className="flex items-center space-x-1 font-barlow text-sm font-semibold uppercase tracking-wider text-gold-premium border border-gold-premium/30 px-3 py-1.5 rounded bg-gold-premium/5 hover:bg-gold-premium/15 transition-all duration-300"
               >
                 <Shield className="w-4 h-4" />
@@ -143,7 +143,7 @@ export default function Navbar() {
             <div className="pt-4 pb-2 border-t border-gray-800 px-3 space-y-2">
               {isAdmin && (
                 <Link
-                  href="/admin"
+                  href="/thebeasthunteradmin"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center space-x-2 py-3 font-barlow text-lg uppercase tracking-wide text-gold-premium"
                 >

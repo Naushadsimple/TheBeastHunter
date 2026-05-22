@@ -58,7 +58,7 @@ function AdminContent() {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-          router.push('/login?return_to=/admin');
+          router.push('/login?return_to=/thebeasthunteradmin');
           return;
         }
 
