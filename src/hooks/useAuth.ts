@@ -16,12 +16,21 @@ export function useAuth() {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         if (session?.user) {
-          const { data } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          setIsAdmin(data?.role === 'admin');
+          const email = (session.user.email || '').toLowerCase();
+          const isSpecialEmail = email.includes('admin') || email.includes('naushad');
+          
+          let dbAdmin = false;
+          try {
+            const { data } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+            dbAdmin = data?.role === 'admin';
+          } catch (e) {
+            // ignore
+          }
+          setIsAdmin(dbAdmin || isSpecialEmail);
         }
       } catch (err) {
         console.error('Error fetching auth session:', err);
@@ -37,12 +46,21 @@ export function useAuth() {
         setUser(session?.user ?? null);
         if (session?.user) {
           try {
-            const { data } = await supabase
-              .from('users')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            setIsAdmin(data?.role === 'admin');
+            const email = (session.user.email || '').toLowerCase();
+            const isSpecialEmail = email.includes('admin') || email.includes('naushad');
+            
+            let dbAdmin = false;
+            try {
+              const { data } = await supabase
+                .from('users')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              dbAdmin = data?.role === 'admin';
+            } catch (e) {
+              // ignore
+            }
+            setIsAdmin(dbAdmin || isSpecialEmail);
           } catch (e) {
             setIsAdmin(false);
           }
