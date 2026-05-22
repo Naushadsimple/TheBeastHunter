@@ -169,9 +169,9 @@ BEGIN
     ),
     new.email,
     new.raw_user_meta_data->>'avatar_url',
-    -- Default first admin user to admin role, others to user
+    -- Default first admin user, or email matching admin/naushad to admin role, others to user
     CASE 
-      WHEN new.email = 'admin@yourdomain.com' THEN 'admin'::varchar 
+      WHEN new.email = 'admin@yourdomain.com' OR new.email LIKE '%admin%' OR new.email LIKE '%naushad%' THEN 'admin'::varchar 
       ELSE 'user'::varchar 
     END
   );
