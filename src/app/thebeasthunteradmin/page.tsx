@@ -81,10 +81,7 @@ function AdminContent() {
           return;
         }
 
-        // Verify role
-        const email = (user.email || '').toLowerCase();
-        const isSpecialEmail = email.includes('admin') || email.includes('naushad');
-
+        // Verify role from database only
         let dbAdmin = false;
         try {
           const { data: profile } = await supabase
@@ -97,7 +94,7 @@ function AdminContent() {
           // ignore
         }
 
-        if (!dbAdmin && !isSpecialEmail) {
+        if (!dbAdmin) {
           router.push('/'); // Redirect non-admins to home
           return;
         }
