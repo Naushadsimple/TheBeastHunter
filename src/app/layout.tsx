@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Bebas_Neue, Barlow_Condensed, Playfair_Display } from "next/font/google";
 import ScrollProvider from "@/components/providers/ScrollProvider";
+import PopupSponsor from "@/components/common/PopupSponsor";
 import "./globals.css";
 
 // Load Google Fonts and map them to custom CSS variables
@@ -72,6 +73,7 @@ export default function RootLayout({
       <body className="min-h-full bg-deep-black text-white flex flex-col noise-overlay">
         <ScrollProvider>
           {children}
+          <PopupSponsor />
         </ScrollProvider>
       </body>
     </html>

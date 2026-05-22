@@ -122,6 +122,10 @@ CREATE TABLE IF NOT EXISTS public.sponsors (
   name VARCHAR(255) NOT NULL,
   logo_url TEXT NOT NULL,
   website_url TEXT,
+  email VARCHAR(255),
+  is_popup BOOLEAN DEFAULT false,
+  popup_description TEXT,
+  popup_pages TEXT DEFAULT '*',
   display_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now()
