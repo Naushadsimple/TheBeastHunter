@@ -9,12 +9,15 @@ export default function PopupSponsor() {
 
   useEffect(() => {
     setMounted(true);
-    // Show automatically on every mount (reload) for perfect demonstration
-    const timer = setTimeout(() => {
-      setOpen(true);
-    }, 800); // 800ms pleasant entrance delay
-
-    return () => clearTimeout(timer);
+    // Show automatically once per session for a premium, non-intrusive user experience
+    const hasSeen = sessionStorage.getItem('tbh_sponsor_popup_seen');
+    if (!hasSeen) {
+      const timer = setTimeout(() => {
+        setOpen(true);
+        sessionStorage.setItem('tbh_sponsor_popup_seen', 'true');
+      }, 1500); // 1.5s pleasant entrance delay
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   if (!mounted) return null;
