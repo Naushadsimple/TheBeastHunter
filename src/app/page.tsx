@@ -6,7 +6,6 @@ import AboutUs from "@/components/sections/AboutUs";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import SponsorsSection from "@/components/sections/SponsorsSection";
 import { createClient } from '@/lib/supabase/server';
-import PopupSponsor from '@/components/common/PopupSponsor';
 import RandomSponsorsSection from '@/components/sections/RandomSponsorsSection';
 
 export const revalidate = 60; // Revalidate page every 60 seconds
@@ -62,7 +61,6 @@ export default async function Home() {
 
   return (
     <>
-        <PopupSponsor />
       <Navbar />
       <main className="flex-grow">
         <Hero />
