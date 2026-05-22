@@ -16,9 +16,6 @@ export function useAuth() {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         if (session?.user) {
-          const email = (session.user.email || '').toLowerCase();
-          const isSpecialEmail = email.includes('admin') || email.includes('naushad');
-          
           let dbAdmin = false;
           try {
             const { data } = await supabase
@@ -30,7 +27,7 @@ export function useAuth() {
           } catch (e) {
             // ignore
           }
-          setIsAdmin(dbAdmin || isSpecialEmail);
+          setIsAdmin(dbAdmin);
         }
       } catch (err) {
         console.error('Error fetching auth session:', err);
@@ -46,9 +43,6 @@ export function useAuth() {
         setUser(session?.user ?? null);
         if (session?.user) {
           try {
-            const email = (session.user.email || '').toLowerCase();
-            const isSpecialEmail = email.includes('admin') || email.includes('naushad');
-            
             let dbAdmin = false;
             try {
               const { data } = await supabase
@@ -60,7 +54,7 @@ export function useAuth() {
             } catch (e) {
               // ignore
             }
-            setIsAdmin(dbAdmin || isSpecialEmail);
+            setIsAdmin(dbAdmin);
           } catch (e) {
             setIsAdmin(false);
           }
