@@ -17,7 +17,6 @@ export default function PopupSponsor() {
     // Skip showing on admin or authentication-related pages
     if (
       pathname.startsWith('/thebeasthunteradmin') ||
-      pathname.startsWith('/login') ||
       pathname.startsWith('/auth')
     ) {
       setSponsor(null);

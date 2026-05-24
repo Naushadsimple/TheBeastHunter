@@ -50,7 +50,7 @@ function ProfileContent() {
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !authUser) {
-          router.push('/login?return_to=/profile');
+          router.push('/events#events-section');
           return;
         }
 

@@ -309,7 +309,6 @@ export default async function EventDetailsPage({ params }: PageProps) {
                   <span className="text-xs uppercase tracking-widest text-gray-500 font-bold block mb-1">Pass Price</span>
                   <div className="flex items-baseline space-x-1 text-white">
                     <span className="font-bebas text-5xl tracking-wide">₹{event.ticket_price}</span>
-                    <span className="text-xs uppercase tracking-widest text-gray-400 font-bold ml-2">+ 18% GST</span>
                   </div>
                 </div>
 

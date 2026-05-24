@@ -1,105 +1,74 @@
-import { redirect, notFound } from 'next/navigation';
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import RegistrationForm from "@/components/events/RegistrationForm";
-import { createClient } from "@/lib/supabase/server";
-import { DBEvent } from "@/components/sections/UpcomingRaces";
+import { notFound } from 'next/navigation';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import RegistrationForm from '@/components/events/RegistrationForm';
+import { createClient } from '@/lib/supabase/server';
+import { DBEvent } from '@/components/sections/UpcomingRaces';
+import { Calendar, MapPin, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface PageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 0; // Dynamic check, do not cache
+export const revalidate = 0;
 
 export default async function RegisterPage({ params }: PageProps) {
   const { slug } = await params;
-
   const supabase = await createClient();
 
-  // 1. Get user session
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Redirect if not logged in
-  if (!user) {
-    redirect(`/login?next=/events/${slug}/register`);
-  }
+  const { data: dbEvent, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
 
-  let event: DBEvent | null = null;
-
-  try {
-    // 2. Fetch event from database
-    const { data: dbEvent, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('slug', slug)
-      .single();
-
-    if (!error && dbEvent) {
-      event = {
-        ...dbEvent,
-        distance_km: Number(dbEvent.distance_km),
-      } as DBEvent;
-    }
-  } catch (err) {
-    console.error('Error fetching event for registration:', err);
-  }
-
-  // 3. Fallback mock events for fully functional demo
-  if (!event) {
-    const mockEvents: Record<string, DBEvent> = {
-      'beast-mud-run-2026': {
-        id: 'mock-1',
-        title: 'Beast Mud Run 2026',
-        slug: 'beast-mud-run-2026',
-        short_description: 'India\'s largest obstacle mud run with 25+ military-grade obstacles, fire jumps, and giant slides.',
-        banner_url: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=800',
-        event_date: '2026-10-15T06:00:00Z',
-        distance_km: 10,
-        difficulty: 'intermediate',
-        ticket_price: 1999,
-        max_participants: 2500,
-      },
-      'night-beast-half-marathon': {
-        id: 'mock-2',
-        title: 'Night Beast Half Marathon',
-        slug: 'night-beast-half-marathon',
-        short_description: 'An electric neon night half marathon through the heart of Delhi. Fully lit course with live music stations.',
-        banner_url: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=800',
-        event_date: '2026-11-20T18:00:00Z',
-        distance_km: 21,
-        difficulty: 'advanced',
-        ticket_price: 2499,
-        max_participants: 1500,
-      },
-      'elite-alpha-challenge': {
-        id: 'mock-3',
-        title: 'The Elite Alpha Challenge',
-        slug: 'elite-alpha-challenge',
-        short_description: 'A brutal 15KM endurance trial on mountain trails. Strictly for advanced endurance athletes.',
-        banner_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&q=80&w=800',
-        event_date: '2026-12-05T05:30:00Z',
-        distance_km: 15,
-        difficulty: 'elite',
-        ticket_price: 3499,
-        max_participants: 500,
-      }
-    };
-
-    event = mockEvents[slug] || null;
-  }
-
-  if (!event) {
+  if (error || !dbEvent) {
     notFound();
   }
 
-  // Format user prop to match RegistrationForm expected type
-  const formUser = {
-    id: user.id,
-    email: user.email!,
-    name: user.user_metadata?.fullName || user.user_metadata?.name || '',
+  const event: DBEvent = {
+    ...dbEvent,
+    distance_km: Number(dbEvent.distance_km),
   };
+
+  const { count: registrationCount } = await supabase
+    .from('registrations')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', dbEvent.id)
+    .in('status', ['confirmed', 'pending']);
+
+  const spotsLeft =
+    dbEvent.max_participants != null
+      ? Math.max(0, dbEvent.max_participants - (registrationCount || 0))
+      : null;
+
+  const registrationClosed =
+    dbEvent.registration_deadline &&
+    new Date(dbEvent.registration_deadline) < new Date();
+
+  const soldOut = spotsLeft !== null && spotsLeft <= 0;
+
+  const formattedDate = new Date(dbEvent.event_date).toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const optionalUser = user
+    ? {
+        id: user.id,
+        email: user.email!,
+        name:
+          (user.user_metadata?.full_name as string) ||
+          (user.user_metadata?.name as string) ||
+          '',
+      }
+    : null;
 
   return (
     <>
@@ -108,17 +77,61 @@ export default async function RegisterPage({ params }: PageProps) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <span className="font-barlow text-sm font-bold uppercase tracking-widest text-gold-premium block mb-2">
-              Registration Portal
+              Secure Registration
             </span>
             <h1 className="font-bebas text-4xl sm:text-5xl text-white tracking-wide uppercase">
               REGISTER FOR <span className="gold-gradient-text">{event.title}</span>
             </h1>
             <p className="font-barlow text-sm text-gray-400 uppercase tracking-widest mt-2">
-              Step-by-step checkout secure entry pass
+              Fill the form → confirm your slot → pay with Cashfree
             </p>
           </div>
 
-          <RegistrationForm event={event} user={formUser} />
+          <div className="flex flex-wrap justify-center gap-4 mb-8 text-sm font-inter text-gray-300">
+            <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
+              <Calendar className="w-4 h-4 text-gold-premium" />
+              {formattedDate}
+            </span>
+            {dbEvent.city && (
+              <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
+                <MapPin className="w-4 h-4 text-gold-premium" />
+                {dbEvent.city}
+              </span>
+            )}
+            {spotsLeft !== null && (
+              <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
+                <span className="text-gold-premium font-bold">{spotsLeft}</span> slots left
+              </span>
+            )}
+          </div>
+
+          {registrationClosed ? (
+            <div className="bg-red-500/5 border border-red-500/30 rounded-lg p-8 text-center space-y-4">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
+              <h2 className="font-bebas text-2xl text-white uppercase">Registration Closed</h2>
+              <p className="text-gray-400 text-sm">The deadline for this event has passed.</p>
+              <Link
+                href={`/events/${slug}`}
+                className="inline-block font-barlow text-sm font-bold uppercase text-gold-premium hover:text-gold-glow"
+              >
+                ← Back to event
+              </Link>
+            </div>
+          ) : soldOut ? (
+            <div className="bg-red-500/5 border border-red-500/30 rounded-lg p-8 text-center space-y-4">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
+              <h2 className="font-bebas text-2xl text-white uppercase">Sold Out</h2>
+              <p className="text-gray-400 text-sm">All slots for this event have been reserved.</p>
+              <Link
+                href={`/events/${slug}`}
+                className="inline-block font-barlow text-sm font-bold uppercase text-gold-premium hover:text-gold-glow"
+              >
+                ← Back to event
+              </Link>
+            </div>
+          ) : (
+            <RegistrationForm event={event} user={optionalUser} />
+          )}
         </div>
       </main>
       <Footer />
