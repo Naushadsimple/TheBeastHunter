@@ -33,23 +33,29 @@ export async function POST(request: NextRequest) {
 
   const signature = request.headers.get('x-webhook-signature') || '';
   const timestamp = request.headers.get('x-webhook-timestamp') || '';
-  const cashfreeSecretKey = process.env.CASHFREE_SECRET_KEY;
-  const isMock = body?.payment?.cf_payment_id?.startsWith('MOCK_') || !cashfreeSecretKey;
+  const webhookSecret =
+    process.env.CASHFREE_WEBHOOK_SECRET || process.env.CASHFREE_SECRET_KEY || '';
+  const isMock = body?.payment?.cf_payment_id?.startsWith('MOCK_');
 
-  // 1. Verify Signature (only if not a simulated/mock payment and credentials exist)
-  if (!isMock && cashfreeSecretKey) {
+  // Reject unsigned client calls in production (mock payments use /api/dev/mock-payment)
+  if (process.env.NODE_ENV === 'production' && isMock) {
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+  }
+
+  // 1. Verify webhook signature (Cashfree: HMAC-SHA256 of timestamp + raw body)
+  if (!isMock && webhookSecret && !webhookSecret.startsWith('placeholder_')) {
     if (!signature || !timestamp) {
-      console.warn('Webhook received without signature headers in production environment');
+      console.warn('Webhook received without signature headers');
       return NextResponse.json({ message: 'Missing signature headers' }, { status: 401 });
     }
 
-    const isValid = verifySignature(signature, timestamp, rawBody, cashfreeSecretKey);
+    const isValid = verifySignature(signature, timestamp, rawBody, webhookSecret);
     if (!isValid) {
       console.error('Webhook signature verification failed!');
       return NextResponse.json({ message: 'Invalid webhook signature' }, { status: 401 });
     }
-  } else {
-    console.log('Bypassing signature verification for mock/local sandbox payment');
+  } else if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ message: 'Webhook secret not configured' }, { status: 503 });
   }
 
   // 2. Extract payload details

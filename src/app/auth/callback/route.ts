@@ -45,6 +45,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // Return the user to login page with error
-  return NextResponse.redirect(`${origin}/login?error=auth-code-exchange-failed`);
+  return NextResponse.redirect(`${origin}/thebeasthunteradmin?error=auth-failed`);
 }

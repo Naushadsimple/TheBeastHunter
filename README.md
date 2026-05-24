@@ -1,4 +1,15 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Beast Hunter
+
+Fitness events & challenge platform — Next.js + Supabase + Cashfree.
+
+## Quick start
+
+**Full setup (Supabase, Cashfree, admin login):** see **[SETUP.md](./SETUP.md)**
+
+```bash
+npm install
+npm run dev
+```
 
 ## Getting Started
 
