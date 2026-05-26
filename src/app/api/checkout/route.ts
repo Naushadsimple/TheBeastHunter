@@ -63,20 +63,28 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
+    console.log('Searching for eventId:', eventId);
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select('*')
       .eq('id', eventId)
-      .eq('status', 'published')
       .single();
 
     if (eventError || !event) {
-      return NextResponse.json({ message: 'Event not found or not open for registration' }, { status: 404 });
+      console.error('Event search error in checkout API:', eventError, 'Found:', event);
+      return NextResponse.json({ message: 'Event not found in database' }, { status: 404 });
+    }
+
+    if (event.status !== 'published') {
+      console.warn('Event exists but status is:', event.status);
+      return NextResponse.json({ message: 'Event is not open for registration' }, { status: 404 });
     }
 
     if (event.registration_deadline && new Date(event.registration_deadline) < new Date()) {
       return NextResponse.json({ message: 'Registration for this event has closed' }, { status: 400 });
     }
+
+    console.log('Found event:', event.title, 'Status:', event.status);
 
     const { data: existingReg } = await supabase
       .from('registrations')
