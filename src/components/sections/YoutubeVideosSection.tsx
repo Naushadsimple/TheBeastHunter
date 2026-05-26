@@ -5,19 +5,19 @@ import { Play } from 'lucide-react';
 
 const VIDEOS = [
   {
-    id: 'dQw4w9WgXcQ',
-    title: 'Beast Challenge Highlights',
-    subtitle: 'Race day energy & finish line moments',
+    id: 'mrxcKhKqoL8',
+    title: 'Beast Hunter Challenge Energy',
+    subtitle: 'High-octane moments from the race field',
   },
   {
-    id: 'dQw4w9WgXcQ',
-    title: 'Training With The Hunters',
-    subtitle: 'How athletes prepare for obstacle runs',
+    id: 'n5rNcLFo9zo',
+    title: 'Training & Prep',
+    subtitle: 'How challengers push past their limits',
   },
   {
-    id: 'dQw4w9WgXcQ',
-    title: 'Behind The Beast Course',
-    subtitle: 'Course build & obstacle walkthrough',
+    id: 'Wy0jVpXL1Sc',
+    title: 'Finishing Line Victory',
+    subtitle: 'Shattering boundaries and celebrating success',
   },
 ];
 

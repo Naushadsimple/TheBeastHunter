@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Menu, X, Shield, Flame } from 'lucide-react';
@@ -23,7 +24,6 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Events', href: '/events#events-section' },
-    { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
 
@@ -42,10 +42,19 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-8">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <Flame className="w-8 h-8 text-gold-premium group-hover:scale-110 transition-transform duration-300" />
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative w-10 h-10 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="The Beast Hunter Challenge Logo"
+                fill
+                sizes="40px"
+                className="object-contain group-hover:scale-110 transition-transform duration-300"
+                unoptimized
+              />
+            </div>
             <span className="font-bebas text-2xl tracking-wider text-white group-hover:text-gold-premium transition-colors duration-300">
-              THE BEAST HUNTER
+              THE BEAST HUNTER CHALLENGE
             </span>
           </Link>
 

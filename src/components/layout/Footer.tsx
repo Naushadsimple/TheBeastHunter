@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, Mail, Phone, MapPin, ArrowUp } from 'lucide-react';
 
 export default function Footer() {
@@ -11,10 +12,19 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <Flame className="w-8 h-8 text-gold-premium" />
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="relative w-10 h-10 shrink-0">
+                <Image
+                  src="/logo.png"
+                  alt="The Beast Hunter Challenge Logo"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
               <span className="font-bebas text-2xl tracking-wider text-white">
-                THE BEAST HUNTER
+                THE BEAST HUNTER CHALLENGE
               </span>
             </Link>
             <p className="text-sm leading-relaxed">
@@ -30,7 +40,6 @@ export default function Footer() {
             <ul className="space-y-3 font-barlow text-base uppercase tracking-wide">
               <li><Link href="/" className="hover:text-gold-premium transition-colors">Home</Link></li>
               <li><Link href="/events#events-section" className="hover:text-gold-premium transition-colors">Races & Events</Link></li>
-              <li><Link href="/about" className="hover:text-gold-premium transition-colors">About</Link></li>
               <li><Link href="/contact" className="hover:text-gold-premium transition-colors">Contact</Link></li>
             </ul>
           </div>
@@ -74,7 +83,7 @@ export default function Footer() {
       <div className="border-t border-gold-premium/10 bg-black/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-center md:text-left">
-            &copy; {currentYear} The Beast Hunter. All Rights Reserved.
+            &copy; {currentYear} The Beast Hunter Challenge. All Rights Reserved.
           </p>
           <button
             type="button"

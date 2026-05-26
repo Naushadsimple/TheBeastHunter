@@ -114,15 +114,9 @@ export default function Hero() {
             onClick={scrollToEvents}
             className="gold-gradient-bg text-black font-barlow text-lg font-black uppercase tracking-wider px-8 py-4 rounded border border-transparent hover:scale-105 active:scale-95 transition-all duration-300 hover:shadow-[0_0_25px_rgba(245,208,96,0.6)] flex items-center justify-center space-x-2 w-full sm:w-auto"
           >
-            <span>Explore Races</span>
+            <span>Explore Events</span>
             <ArrowRight className="w-5 h-5" />
           </a>
-          <Link
-            href="/about"
-            className="bg-transparent border border-white/20 hover:border-gold-premium text-white font-barlow text-lg font-bold uppercase tracking-wider px-8 py-4 rounded hover:bg-white/5 active:scale-95 transition-all duration-300 w-full sm:w-auto flex items-center justify-center"
-          >
-            Our Philosophy
-          </Link>
         </motion.div>
       </div>
     </div>
