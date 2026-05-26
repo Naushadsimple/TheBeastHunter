@@ -33,23 +33,23 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "The Beast Hunter | Premium Fitness Events & Challenges",
-    template: "%s | The Beast Hunter",
+    default: "The Beast Hunter Challenge | Premium Fitness Events & Challenges",
+    template: "%s | The Beast Hunter Challenge",
   },
   description: "Discover upcoming races, register online, challenge yourself, and push your limits with the premium fitness event platform.",
-  keywords: ["fitness events", "marathons", "runs", "challenges", "athletic races", "India runs", "The Beast Hunter"],
+  keywords: ["fitness events", "marathons", "runs", "challenges", "athletic races", "India runs", "The Beast Hunter Challenge"],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   openGraph: {
-    title: "The Beast Hunter | Premium Fitness Events",
+    title: "The Beast Hunter Challenge | Premium Fitness Events",
     description: "Discover upcoming races, register online, and push your limits.",
     url: "/",
-    siteName: "The Beast Hunter",
+    siteName: "The Beast Hunter Challenge",
     locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Beast Hunter | Premium Fitness Events",
+    title: "The Beast Hunter Challenge | Premium Fitness Events",
     description: "Discover upcoming races, register online, and push your limits.",
   },
 };

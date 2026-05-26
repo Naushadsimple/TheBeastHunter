@@ -9,42 +9,39 @@ export interface SponsorItem {
   website_url?: string | null;
 }
 
-const FALLBACK_SPONSORS: SponsorItem[] = [
-  {
-    id: '1',
-    name: 'Nike Training',
-    logo_url:
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '2',
-    name: 'Hydration',
-    logo_url:
-      'https://images.unsplash.com/photo-1551033406-611912d1d3a5?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '3',
-    name: 'Nutrition',
-    logo_url:
-      'https://images.unsplash.com/photo-1593095948071-474c5cc2989b?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: '4',
-    name: 'Fitness Tech',
-    logo_url:
-      'https://images.unsplash.com/photo-1581291519195-ef11498d1cf1?auto=format&fit=crop&w=400&q=80',
-  },
-];
-
 interface SponsorsSectionProps {
   sponsors?: SponsorItem[];
 }
 
 export default function SponsorsSection({ sponsors }: SponsorsSectionProps) {
-  const list =
-    sponsors && sponsors.length > 0
-      ? sponsors.filter((s) => s.logo_url)
-      : FALLBACK_SPONSORS;
+  const list = sponsors && sponsors.length > 0 ? sponsors.filter((s) => s.logo_url) : [];
+
+  if (list.length === 0) {
+    return (
+      <section className="relative bg-gradient-to-b from-black via-deep-black to-deep-black py-16 border-y border-gold-premium/10 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.04),transparent_70%)] pointer-events-none" />
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <span className="font-barlow text-xs font-bold uppercase tracking-[0.3em] text-gold-premium">
+            Sponsorship Open
+          </span>
+          <h2 className="font-bebas text-3xl sm:text-5xl text-white tracking-wider uppercase mt-2">
+            Partner With <span className="gold-gradient-text">The Beast Hunter</span>
+          </h2>
+          <p className="font-barlow text-base sm:text-lg text-gray-400 mt-4 max-w-2xl mx-auto tracking-wide leading-relaxed">
+            Showcase your brand to thousands of fitness enthusiasts and elite athletes. Join us as an official partner for Season 2026.
+          </p>
+          <div className="mt-8">
+            <a
+              href="mailto:support@thebeasthunterchallenge.com"
+              className="inline-flex items-center justify-center font-barlow text-sm font-black uppercase tracking-wider text-black gold-gradient-bg px-8 py-3.5 rounded hover:scale-105 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+            >
+              Become an Official Sponsor
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const marqueeItems = [...list, ...list];
 

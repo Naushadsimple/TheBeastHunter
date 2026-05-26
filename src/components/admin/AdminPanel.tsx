@@ -25,9 +25,10 @@ import {
   UserCheck,
   Handshake,
   Menu,
+  Mail,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'events' | 'challengers' | 'sponsors';
+type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -39,11 +40,33 @@ interface DashboardStats {
   activeSponsors: number;
 }
 
+const PREBUILT_TEMPLATES = [
+  {
+    id: 'registration_confirm',
+    name: 'Registration Confirmation (Pre-built)',
+    subject: 'Registration Confirmed: {event}',
+    body: 'Hello {name},\n\nYour registration for {event} has been successfully confirmed!\n\nYour official Bib Code is: {code}\nRegistration Status: {status}\n\nWe look forward to seeing you at the starting line. Stay strong and keep training!\n\nBest regards,\nThe Beast Hunter Team',
+  },
+  {
+    id: 'payment_receipt',
+    name: 'Payment Receipt (Pre-built)',
+    subject: 'Receipt for your payment: {event}',
+    body: 'Hello {name},\n\nWe have successfully received your payment of {price} for {event}.\n\nRegistration Status: {status}\nBib Code: {code}\n\nYour ticket has been officially generated. Get ready to unleash the beast!\n\nBest regards,\nThe Beast Hunter Team',
+  },
+  {
+    id: 'event_reminder',
+    name: 'Event Day Reminder (Pre-built)',
+    subject: 'Important Reminder: {event} is coming up!',
+    body: 'Hello {name},\n\nThis is a friendly reminder that {event} is just around the corner!\n\nDetails:\n- Event: {event}\n- Bib Code: {code}\n- Ticket Price: {price}\n- Status: {status}\n\nPlease ensure you arrive at the venue early and carry your ID proof.\n\nKeep pushing, keep hunting!\n\nBest regards,\nThe Beast Hunter Team',
+  },
+];
+
 const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'events', label: 'Events', icon: Flame },
   { id: 'challengers', label: 'Challengers', icon: UserCheck },
   { id: 'sponsors', label: 'Sponsors', icon: Handshake },
+  { id: 'mail', label: 'Mail Center', icon: Mail },
 ];
 
 export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) {
@@ -97,6 +120,137 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     popup_description: '',
     popup_pages: '*',
   });
+
+  // Mail Center states
+  const [recipientType, setRecipientType] = useState<'single' | 'all' | 'event'>('single');
+  const [selectedRecipientId, setSelectedRecipientId] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({ name: '', subject: '', body: '' });
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('tbh_custom_templates');
+      if (stored) {
+        try {
+          setCustomTemplates(JSON.parse(stored));
+        } catch (e) {
+          console.error('Error parsing stored templates', e);
+        }
+      }
+    }
+  }, []);
+
+  const saveCustomTemplate = (templatesList: any[]) => {
+    setCustomTemplates(templatesList);
+    localStorage.setItem('tbh_custom_templates', JSON.stringify(templatesList));
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) {
+      setEmailSubject('');
+      setEmailBody('');
+      return;
+    }
+
+    const prebuilt = PREBUILT_TEMPLATES.find((t) => t.id === templateId);
+    if (prebuilt) {
+      setEmailSubject(prebuilt.subject);
+      setEmailBody(prebuilt.body);
+      return;
+    }
+
+    const custom = customTemplates.find((t) => t.id === templateId);
+    if (custom) {
+      setEmailSubject(custom.subject);
+      setEmailBody(custom.body);
+    }
+  };
+
+  const handleCreateTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTemplate.name || !newTemplate.subject || !newTemplate.body) {
+      setMessage({ type: 'error', text: 'All template fields are required' });
+      return;
+    }
+    const created = {
+      id: `custom_${Date.now()}`,
+      name: `${newTemplate.name} (Custom)`,
+      subject: newTemplate.subject,
+      body: newTemplate.body,
+    };
+    const updated = [...customTemplates, created];
+    saveCustomTemplate(updated);
+    setShowTemplateModal(false);
+    setNewTemplate({ name: '', subject: '', body: '' });
+    setMessage({ type: 'success', text: 'Custom template saved!' });
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    if (!confirm('Are you sure you want to delete this custom template?')) return;
+    const updated = customTemplates.filter((t) => t.id !== templateId);
+    saveCustomTemplate(updated);
+    if (selectedTemplateId === templateId) {
+      setSelectedTemplateId('');
+      setEmailSubject('');
+      setEmailBody('');
+    }
+    setMessage({ type: 'success', text: 'Template deleted' });
+  };
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (recipientType === 'single' && !selectedRecipientId) {
+      setMessage({ type: 'error', text: 'Please select a challenger' });
+      return;
+    }
+    if (recipientType === 'event' && !selectedEventId) {
+      setMessage({ type: 'error', text: 'Please select an event cohort' });
+      return;
+    }
+    if (!emailSubject || !emailBody) {
+      setMessage({ type: 'error', text: 'Subject and Body cannot be empty' });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const res = await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipientType,
+          recipientId: recipientType === 'single' ? selectedRecipientId : undefined,
+          eventId: recipientType === 'event' ? selectedEventId : undefined,
+          subject: emailSubject,
+          body: emailBody,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to dispatch emails');
+
+      setMessage({
+        type: 'success',
+        text: `Success! ${data.message || `Processed emails for ${data.count} recipients.`}`,
+      });
+      
+      // Reset composer
+      setEmailSubject('');
+      setEmailBody('');
+      setSelectedTemplateId('');
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to send emails' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch('/api/admin/dashboard', {
@@ -705,6 +859,313 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
         </div>
       )}
 
+      {/* Mail Center */}
+      {activeTab === 'mail' && (
+        <div className="space-y-6 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="font-bebas text-2xl text-white uppercase flex items-center gap-2">
+                <Mail className="w-6 h-6 text-gold-premium" />
+                Mail Center &amp; Broadcast
+              </h2>
+              <p className="text-xs text-gray-500 font-barlow uppercase tracking-wider mt-1">
+                Compose custom alerts or load pre-built event emails to challengers
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowTemplateModal(true)}
+              className="gold-gradient-bg text-black font-barlow text-xs font-black uppercase px-4 py-2.5 rounded flex items-center justify-center gap-1 hover:scale-105 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Create Custom Template
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left/Middle Column: Email Composer */}
+            <div className="lg:col-span-2 bg-dark-gray/40 border border-white/10 rounded-xl p-4 sm:p-6 space-y-4">
+              <h3 className="font-bebas text-lg text-white uppercase border-b border-white/5 pb-2">
+                Email Composer
+              </h3>
+              
+              <form onSubmit={handleSendEmail} className="space-y-4">
+                {/* Recipient Selector type */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: 'single', label: 'Single Challenger' },
+                    { id: 'event', label: 'Event Broadcast' },
+                    { id: 'all', label: 'Broadcast All Users' },
+                  ].map((opt) => (
+                    <label
+                      key={opt.id}
+                      className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs font-barlow font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                        recipientType === opt.id
+                          ? 'border-gold-premium/50 bg-gold-premium/5 text-gold-premium'
+                          : 'border-white/10 bg-black/20 text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="recipientType"
+                        checked={recipientType === opt.id}
+                        onChange={() => {
+                          setRecipientType(opt.id as any);
+                          setSelectedRecipientId('');
+                          setSelectedEventId('');
+                        }}
+                        className="accent-gold-premium"
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+
+                {/* Conditional selector drop downs */}
+                {recipientType === 'single' && (
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                      Select Challenger
+                    </span>
+                    <select
+                      value={selectedRecipientId}
+                      onChange={(e) => setSelectedRecipientId(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold-premium"
+                      required
+                    >
+                      <option value="">-- Choose registered challenger --</option>
+                      {registrations.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.full_name} ({r.email}) - {r.event_id?.title || 'Unknown Event'} [Status: {r.status}]
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {recipientType === 'event' && (
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                      Select Event Cohort
+                    </span>
+                    <select
+                      value={selectedEventId}
+                      onChange={(e) => setSelectedEventId(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold-premium"
+                      required
+                    >
+                      <option value="">-- Choose event --</option>
+                      {events.map((ev) => (
+                        <option key={ev.id} value={ev.id}>
+                          {ev.title} ({new Date(ev.event_date).toLocaleDateString('en-IN')})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {/* Select template dropdown */}
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                    Load Email Template
+                  </span>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => handleTemplateChange(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold-premium"
+                  >
+                    <option value="">-- Composed from scratch --</option>
+                    <optgroup label="Pre-built Templates">
+                      {PREBUILT_TEMPLATES.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {customTemplates.length > 0 && (
+                      <optgroup label="Custom Templates">
+                        {customTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </label>
+
+                {/* Subject field */}
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                    Subject Line
+                  </span>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="Enter email subject line..."
+                    className="w-full bg-black/40 border border-white/10 rounded px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold-premium"
+                    required
+                  />
+                </label>
+
+                {/* Body field */}
+                <label className="block space-y-1">
+                  <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                    Email Message Body
+                  </span>
+                  <textarea
+                    value={emailBody}
+                    onChange={(e) => setEmailBody(e.target.value)}
+                    placeholder="Type your email message..."
+                    rows={12}
+                    className="w-full bg-black/40 border border-white/10 rounded px-3 py-3 text-white text-sm font-mono focus:outline-none focus:border-gold-premium leading-relaxed"
+                    required
+                  />
+                </label>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={sendingEmail}
+                    className="w-full sm:w-auto px-8 py-4 bg-gold-premium text-black font-barlow text-base font-black uppercase tracking-wider rounded hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] disabled:opacity-50"
+                  >
+                    {sendingEmail ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Sending Broadcast...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-5 h-5" />
+                        <span>Dispatch Email</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Right Column: Placeholders info & custom templates manager */}
+            <div className="space-y-6">
+              {/* Placeholders info */}
+              <div className="bg-gold-premium/5 border border-gold-premium/20 rounded-xl p-4 sm:p-5 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-0.5 gold-gradient-bg" />
+                <h4 className="font-bebas text-base text-gold-premium uppercase tracking-wider mb-3">
+                  Dynamic Placeholders
+                </h4>
+                <p className="text-xs text-gray-400 mb-4 font-inter leading-relaxed">
+                  Use these tags in your template Subject or Body. They will be automatically replaced with the challenger's real details during sending:
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                  <div className="p-2 rounded bg-black/30 border border-white/5">
+                    <span className="text-gold-glow block font-bold">{`{name}`}</span>
+                    <span className="text-[10px] text-gray-500">Challenger name</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/30 border border-white/5">
+                    <span className="text-gold-glow block font-bold">{`{event}`}</span>
+                    <span className="text-[10px] text-gray-500">Event title</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/30 border border-white/5">
+                    <span className="text-gold-glow block font-bold">{`{code}`}</span>
+                    <span className="text-[10px] text-gray-500">Bib / Reg code</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/30 border border-white/5">
+                    <span className="text-gold-glow block font-bold">{`{price}`}</span>
+                    <span className="text-[10px] text-gray-500">Ticket price</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/30 border border-white/5 col-span-2">
+                    <span className="text-gold-glow block font-bold">{`{status}`}</span>
+                    <span className="text-[10px] text-gray-500">Registration status</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom templates list */}
+              <div className="bg-dark-gray/30 border border-white/10 rounded-xl p-4 sm:p-5 space-y-4">
+                <h4 className="font-bebas text-lg text-white uppercase tracking-wider border-b border-white/5 pb-2">
+                  My Custom Templates
+                </h4>
+                {customTemplates.length === 0 ? (
+                  <p className="text-xs text-gray-500 font-inter italic leading-relaxed">
+                    No custom templates created yet. Click "Create Custom Template" to build one!
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    {customTemplates.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between gap-3 p-3 rounded bg-black/20 border border-white/5 hover:border-white/10"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs text-white truncate">{t.name.replace(' (Custom)', '')}</p>
+                          <p className="text-[10px] text-gray-500 truncate mt-0.5">{t.subject}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTemplate(t.id)}
+                          className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded hover:bg-red-500/20"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Template Modal */}
+      {showTemplateModal && (
+        <Modal title="Create Custom Template" onClose={() => setShowTemplateModal(false)}>
+          <form onSubmit={handleCreateTemplate} className="space-y-4 max-h-[75vh] overflow-y-auto p-1">
+            <FormInput
+              label="Template Name"
+              value={newTemplate.name}
+              onChange={(v) => setNewTemplate((p) => ({ ...p, name: v }))}
+              required
+            />
+            <FormInput
+              label="Subject line"
+              value={newTemplate.subject}
+              onChange={(v) => setNewTemplate((p) => ({ ...p, subject: v }))}
+              required
+            />
+            <label className="block space-y-1">
+              <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">
+                Email Message Body
+              </span>
+              <textarea
+                value={newTemplate.body}
+                onChange={(e) => setNewTemplate((p) => ({ ...p, body: e.target.value }))}
+                rows={8}
+                className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm font-mono leading-relaxed"
+                placeholder="Hi {name},..."
+                required
+              />
+            </label>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="px-4 py-2 text-xs uppercase text-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 gold-gradient-bg text-black text-xs font-black uppercase rounded"
+              >
+                Save Template
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Event modal */}
       {showEventModal && (
         <Modal title="Create event" onClose={() => setShowEventModal(false)}>
@@ -742,40 +1203,42 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       {/* Sponsor modal */}
       {showSponsorModal && (
         <Modal title={editingSponsor ? 'Edit sponsor' : 'Add sponsor'} onClose={() => { setShowSponsorModal(false); setEditingSponsor(null); }}>
-          <form onSubmit={handleSaveSponsor} className="space-y-4 max-h-[70vh] overflow-y-auto p-1">
-            <FormInput label="Name" value={newSponsor.name} onChange={(v) => setNewSponsor((p) => ({ ...p, name: v }))} required />
-            <FormInput label="Email" type="email" value={newSponsor.email} onChange={(v) => setNewSponsor((p) => ({ ...p, email: v }))} />
-            <FormInput label="Logo URL" type="url" value={newSponsor.logo_url} onChange={(v) => setNewSponsor((p) => ({ ...p, logo_url: v }))} required />
-            <FormInput label="Website" type="url" value={newSponsor.website_url} onChange={(v) => setNewSponsor((p) => ({ ...p, website_url: v }))} />
-            <FormInput label="Display order" type="number" value={newSponsor.display_order} onChange={(v) => setNewSponsor((p) => ({ ...p, display_order: v }))} />
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={newSponsor.is_active} onChange={(e) => setNewSponsor((p) => ({ ...p, is_active: e.target.checked }))} />
-              <span className="text-sm text-gray-300">Active on website</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={newSponsor.is_popup} onChange={(e) => setNewSponsor((p) => ({ ...p, is_popup: e.target.checked }))} />
-              <span className="text-sm text-gold-premium">Featured popup sponsor</span>
-            </label>
-            {newSponsor.is_popup && (
-              <>
-                <FormInput label="Popup pages (* for all)" value={newSponsor.popup_pages} onChange={(v) => setNewSponsor((p) => ({ ...p, popup_pages: v }))} />
-                <label className="block space-y-1">
-                  <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">Popup description</span>
-                  <textarea
-                    value={newSponsor.popup_description}
-                    onChange={(e) => setNewSponsor((p) => ({ ...p, popup_description: e.target.value }))}
-                    rows={3}
-                    className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm"
-                  />
-                </label>
-              </>
-            )}
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => { setShowSponsorModal(false); setEditingSponsor(null); }} className="px-4 py-2 text-xs text-gray-400 uppercase">
+          <form onSubmit={handleSaveSponsor} className="flex flex-col max-h-[75vh]">
+            <div className="space-y-4 overflow-y-auto p-1 flex-grow pr-2 max-h-[50vh]">
+              <FormInput label="Name" value={newSponsor.name} onChange={(v) => setNewSponsor((p) => ({ ...p, name: v }))} required />
+              <FormInput label="Email" type="email" value={newSponsor.email} onChange={(v) => setNewSponsor((p) => ({ ...p, email: v }))} />
+              <FormInput label="Logo URL" type="url" value={newSponsor.logo_url} onChange={(v) => setNewSponsor((p) => ({ ...p, logo_url: v }))} required />
+              <FormInput label="Website" type="url" value={newSponsor.website_url} onChange={(v) => setNewSponsor((p) => ({ ...p, website_url: v }))} />
+              <FormInput label="Display order" type="number" value={newSponsor.display_order} onChange={(v) => setNewSponsor((p) => ({ ...p, display_order: v }))} />
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={newSponsor.is_active} onChange={(e) => setNewSponsor((p) => ({ ...p, is_active: e.target.checked }))} />
+                <span className="text-sm text-gray-300">Active on website</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={newSponsor.is_popup} onChange={(e) => setNewSponsor((p) => ({ ...p, is_popup: e.target.checked }))} />
+                <span className="text-sm text-gold-premium">Featured popup sponsor</span>
+              </label>
+              {newSponsor.is_popup && (
+                <>
+                  <FormInput label="Popup pages (* for all)" value={newSponsor.popup_pages} onChange={(v) => setNewSponsor((p) => ({ ...p, popup_pages: v }))} />
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-barlow font-bold text-gray-500 uppercase">Popup description</span>
+                    <textarea
+                      value={newSponsor.popup_description}
+                      onChange={(e) => setNewSponsor((p) => ({ ...p, popup_description: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm"
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-white/10 shrink-0">
+              <button type="button" onClick={() => { setShowSponsorModal(false); setEditingSponsor(null); }} className="px-4 py-2 text-xs text-gray-400 uppercase hover:text-white transition-colors">
                 Cancel
               </button>
-              <button type="submit" className="px-6 py-2 gold-gradient-bg text-black text-xs font-black uppercase rounded">
-                Save
+              <button type="submit" className="px-6 py-2 gold-gradient-bg text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all">
+                Save Sponsor
               </button>
             </div>
           </form>
