@@ -1342,8 +1342,11 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       {/* Challenger details modal */}
       {viewingReg && (() => {
         const orderId = viewingReg.payments?.[0]?.cashfree_order_id || '—';
+        const siteUrl = typeof window !== 'undefined' && !window.location.hostname.includes('localhost')
+          ? window.location.origin
+          : 'https://thebeasthunter.in';
         const orderLink = orderId !== '—'
-          ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/payment/success?order_id=${orderId}`
+          ? `${siteUrl}/payment/success?order_id=${orderId}`
           : null;
 
         return (
@@ -1541,14 +1544,14 @@ function RegActions({
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-[#0B0B0B] border border-white/10 w-full sm:max-w-xl rounded-t-2xl sm:rounded-xl max-h-[90vh] overflow-hidden">
-        <div className="p-4 border-b border-white/10 flex justify-between items-center">
+      <div className="bg-[#0B0B0B] border border-white/10 w-full sm:max-w-xl rounded-t-2xl sm:rounded-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-white/10 flex justify-between items-center shrink-0">
           <h3 className="font-bebas text-xl text-white uppercase">{title}</h3>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-white">
             <XCircle className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4">{children}</div>
+        <div className="p-4 overflow-y-auto flex-grow max-h-[calc(90vh-60px)]">{children}</div>
       </div>
     </div>
   );
