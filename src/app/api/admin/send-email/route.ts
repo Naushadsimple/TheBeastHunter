@@ -78,6 +78,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, count: 0, message: 'No recipients found for this selection' });
     }
 
+    const { sendCustomEmail } = await import('@/lib/mail');
+
     // Process each email and insert database logs
     const logPromises = recipients.map(async (rec) => {
       const placeholderData = {
@@ -91,12 +93,16 @@ export async function POST(req: Request) {
       const finalSubject = replacePlaceholders(subject, placeholderData);
       const finalBody = replacePlaceholders(body, placeholderData);
 
+      const mailResult = await sendCustomEmail(rec.email, finalSubject, finalBody);
+
       // Save log to Supabase email_logs
       return db.from('email_logs').insert({
         recipient_email: rec.email,
         email_type: 'admin_alert',
         registration_id: rec.id,
-        status: 'sent',
+        status: mailResult.success ? 'sent' : 'failed',
+        resend_message_id: mailResult.messageId || null,
+        error_message: mailResult.error || null,
         sent_at: new Date().toISOString(),
       });
     });

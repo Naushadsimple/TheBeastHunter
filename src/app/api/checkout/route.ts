@@ -191,12 +191,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log the pending alert email in email_logs table
+    // Import dynamically to avoid compile time issues or import loop
+    const { sendPendingEmail } = await import('@/lib/mail');
+    
+    // Trigger actual email dispatch via Nodemailer SMTP
+    const mailResult = await sendPendingEmail(email, registration, event);
+
+    // Log the pending alert email in email_logs table with dispatch result
     await supabase.from('email_logs').insert({
       recipient_email: email,
-      email_type: 'admin_alert',
+      email_type: 'registration_pending',
       registration_id: registration.id,
-      status: 'sent',
+      status: mailResult.success ? 'sent' : 'failed',
+      resend_message_id: mailResult.messageId || null,
+      error_message: mailResult.error || null,
+      sent_at: new Date().toISOString(),
     });
 
     return NextResponse.json({

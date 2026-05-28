@@ -55,18 +55,38 @@ export async function POST(request: Request) {
         })
         .eq('registration_id', registrationId);
 
+      // Fetch payment record to obtain the cashfree_order_id (order ID)
+      const { data: payment } = await db
+        .from('payments')
+        .select('cashfree_order_id')
+        .eq('registration_id', registrationId)
+        .maybeSingle();
+
+      const orderId = payment?.cashfree_order_id;
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const passUrl = orderId
+        ? `${baseUrl}/payment/success?order_id=${orderId}`
+        : `${baseUrl}/payment/success?registration_id=${registrationId}`;
+
+      const { sendApprovalEmail } = await import('@/lib/mail');
+      const mailResult = await sendApprovalEmail(registration.email, registration, registration.event_id, passUrl);
+
       // 4. Log confirmation email in email_logs
       await db.from('email_logs').insert({
         recipient_email: registration.email,
         email_type: 'registration_confirmed',
         registration_id: registrationId,
-        status: 'sent',
+        status: mailResult.success ? 'sent' : 'failed',
+        resend_message_id: mailResult.messageId || null,
+        error_message: mailResult.error || null,
         sent_at: now,
       });
 
       return NextResponse.json({
         success: true,
-        message: 'Registration approved. Confirmation email logged.',
+        message: mailResult.success 
+          ? 'Registration approved and confirmation email sent.'
+          : `Registration approved, but email failed: ${mailResult.error}`,
       });
     } else {
       // action === 'reject'
@@ -93,18 +113,25 @@ export async function POST(request: Request) {
         })
         .eq('registration_id', registrationId);
 
-      // 4. Log rejection email in email_logs (refund message included in template/alert)
+      const { sendRejectionEmail } = await import('@/lib/mail');
+      const mailResult = await sendRejectionEmail(registration.email, registration, registration.event_id);
+
+      // 4. Log rejection email in email_logs
       await db.from('email_logs').insert({
         recipient_email: registration.email,
-        email_type: 'admin_alert',
+        email_type: 'registration_rejected',
         registration_id: registrationId,
-        status: 'sent',
+        status: mailResult.success ? 'sent' : 'failed',
+        resend_message_id: mailResult.messageId || null,
+        error_message: mailResult.error || null,
         sent_at: now,
       });
 
       return NextResponse.json({
         success: true,
-        message: 'Registration rejected. Refund email notification logged.',
+        message: mailResult.success 
+          ? 'Registration rejected and notification email sent.'
+          : `Registration rejected, but email failed: ${mailResult.error}`,
       });
     }
   } catch (err) {
