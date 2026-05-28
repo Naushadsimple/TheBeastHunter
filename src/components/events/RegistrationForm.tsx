@@ -206,8 +206,8 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
   };
 
   const totalAmount = event.ticket_price;
-  const upiLink = `upi://pay?pa=gasuvarna-4@oksbi&pn=The%20Beast%20Hunter%20Challenge&am=${totalAmount}&cu=INR`;
-  const qrCodeImageUrl = '/payment-qr.png';
+  const upiLink = `upi://pay?pa=ravitiwari8421787508@okhdfcbank&pn=The%20Beast%20Hunter%20Challenge&am=${totalAmount}&cu=INR`;
+  const qrCodeImageUrl = '/payment-qr1.png';
 
   return (
     <div className="bg-dark-gray/30 border border-white/5 rounded-lg p-6 sm:p-10 relative overflow-hidden">
@@ -565,7 +565,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                     <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-semibold">
                       UPI ID / VPA
                     </span>
-                    <span className="text-white font-mono font-bold">gasuvarna-4@oksbi</span>
+                    <span className="text-white font-mono font-bold">ravitiwari8421787508@okhdfcbank</span>
                   </div>
                   <button
                     type="button"

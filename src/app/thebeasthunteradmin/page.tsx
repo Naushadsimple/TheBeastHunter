@@ -23,8 +23,8 @@ export default function AdminPage() {
           <Suspense
             fallback={
               <div className="flex justify-center py-24">
-                <Loader2 className="w-12 h-12 text-gold-premium animate-spin" />
-              </div>
+              <Loader2 className="w-12 h-12 text-gold-premium animate-spin" />
+            </div>
             }
           >
             <AdminPageContent />

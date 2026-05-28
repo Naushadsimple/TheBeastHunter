@@ -81,9 +81,9 @@ export default function TermsOfServicePage() {
         <p>
           Registration fees are paid via secure manual UPI transfers. Refund eligibility depends on the specific
           event policy and timing of cancellation. Contact{' '}
-          <a href="mailto:info@thebeasthunter.in" className="text-gold-premium hover:underline">
-            info@thebeasthunter.in
-          </a>{' '}
+          <a href="mailto:thebeasthunterchallenge@gmail.com" className="text-gold-premium hover:underline">
+            thebeasthunterchallenge@gmail.com
+          </a>{' '} Or Call this number "+91 84217 87508"
           for refund requests.
         </p>
       </section>
@@ -111,7 +111,16 @@ export default function TermsOfServicePage() {
 
       <section className="space-y-4">
         <h2 className="font-barlow text-xl font-bold text-white uppercase tracking-wider">
-          8. Governing law
+          8. Liability &amp; Official Decisions
+        </h2>
+        <p>
+          If any injury, health issue, or accident happens to a challenger or participant, we hold no responsibility. The decisions made by the host, representatives, referees, or competition checkers are absolutely final, and no appeals can be made against them.
+        </p>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="font-barlow text-xl font-bold text-white uppercase tracking-wider">
+          9. Governing law
         </h2>
         <p>
           These Terms are governed by the laws of India. Disputes shall be subject to the courts of
