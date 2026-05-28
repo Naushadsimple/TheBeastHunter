@@ -45,7 +45,7 @@ export default function AboutUs() {
               <span className="gold-gradient-text">EXTREME CHALLENGES</span>
             </h2>
             <p className="font-inter text-gray-300 text-lg leading-relaxed mb-6">
-              The Beast Hunter creates premium obstacle runs, night marathons, and endurance
+              The Beast Hunter Challenge creates premium obstacle runs, night marathons, and endurance
               events across Mumbai. We are not a casual fun run — we build courses that test
               courage, stamina, and mental toughness.
             </p>

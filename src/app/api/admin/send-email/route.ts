@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     const logPromises = recipients.map(async (rec) => {
       const placeholderData = {
         full_name: rec.full_name || '',
-        event_title: rec.event_id?.title || 'The Beast Hunter Event',
+        event_title: rec.event_id?.title || 'The Beast Hunter Challenge Event',
         registration_code: rec.registration_code || '',
         ticket_price: rec.event_id?.ticket_price ? `₹${Number(rec.event_id.ticket_price).toLocaleString('en-IN')}` : '₹0',
         status: rec.status || 'pending',

@@ -21,7 +21,7 @@ export default function TestimonialsSection() {
     {
       name: 'Dr. Sarah Khan',
       designation: 'Marathoner & Cardiologist',
-      content: 'From timing chips to hydration stations, everything was professionally managed. As a doctor, I appreciated the instant availability of medical tents. The Beast Hunter holds the highest standard of racing.',
+      content: 'From timing chips to hydration stations, everything was professionally managed. As a doctor, I appreciated the instant availability of medical tents. The Beast Hunter Challenge holds the highest standard of racing.',
       rating: 5,
     },
     {

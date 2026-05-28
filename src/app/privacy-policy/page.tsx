@@ -3,7 +3,7 @@ import LegalPageLayout from '@/components/layout/LegalPageLayout';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How The Beast Hunter collects, uses, and protects your personal information.',
+  description: 'How The Beast Hunter Challenge collects, uses, and protects your personal information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
           1. Introduction
         </h2>
         <p>
-          The Beast Hunter (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website and event
+          The Beast Hunter Challenge (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website and event
           registration platform at thebeasthunter.in. This Privacy Policy explains how we collect,
           use, store, and protect your information when you browse our site or register for an event.
         </p>
@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
           <li>Name, email address, and mobile number</li>
           <li>Date of birth, gender, city, and emergency contact details</li>
           <li>Event preferences (e.g. t-shirt size, medical notes you choose to share)</li>
-          <li>Payment transaction references from our payment partner (Cashfree) — we do not store card or UPI PIN data</li>
+          <li>Payment transaction references (UPI Transaction ID / UTR and proof screenshots) — we do not store card or UPI PIN data</li>
           <li>Technical data: IP address, browser type, and cookies for site functionality</li>
         </ul>
       </section>
@@ -51,7 +51,7 @@ export default function PrivacyPolicyPage() {
         </h2>
         <p>
           We share data only with trusted service providers necessary to run our platform (e.g.
-          Supabase for database hosting, Cashfree for payments, email delivery services). We do not
+          Supabase for database hosting, payment verification tools, email delivery services). We do not
           sell your personal information to third parties for marketing.
         </p>
       </section>

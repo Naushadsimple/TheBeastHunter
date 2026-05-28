@@ -14,15 +14,18 @@ export default function Hero() {
   useEffect(() => {
     // Parallax scroll effect using GSAP
     if (containerRef.current && imageRef.current) {
-      gsap.to(imageRef.current, {
-        yPercent: 20,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
+      import('gsap/ScrollTrigger').then(({ default: ScrollTrigger }) => {
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.to(imageRef.current!, {
+          yPercent: 20,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: true,
+          },
+        });
       });
     }
   }, []);

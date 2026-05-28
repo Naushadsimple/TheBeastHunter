@@ -4,7 +4,7 @@ import LegalPageLayout from '@/components/layout/LegalPageLayout';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms and conditions for participating in The Beast Hunter events.',
+  description: 'Terms and conditions for participating in The Beast Hunter Challenge events.',
 };
 
 export default function TermsOfServicePage() {
@@ -15,11 +15,11 @@ export default function TermsOfServicePage() {
           Important — Health &amp; liability
         </h2>
         <p className="text-white font-semibold">
-          By registering for any The Beast Hunter event, you acknowledge that participation
+          By registering for any The Beast Hunter Challenge event, you acknowledge that participation
           involves inherent physical risks including injury, illness, exhaustion, or death. If any
           health issue, injury, accident, or medical emergency occurs before, during, or after the
           event — whether related to the course or not — you accept full personal responsibility.
-          The Beast Hunter, its organisers, partners, volunteers, and sponsors shall not be liable
+          The Beast Hunter Challenge, its organisers, partners, volunteers, and sponsors shall not be liable
           for any injury, loss, damage, or health complication arising from your participation,
           except where liability cannot be excluded under applicable Indian law.
         </p>
@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
         </h2>
         <p>
           These Terms of Service (&quot;Terms&quot;) govern your use of our website and your registration
-          for events operated by The Beast Hunter. By completing registration and payment, you agree
+          for events operated by The Beast Hunter Challenge. By completing registration and payment, you agree
           to these Terms and our{' '}
           <Link href="/privacy-policy" className="text-gold-premium hover:underline">
             Privacy Policy
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
           4. Release of liability
         </h2>
         <p>
-          To the fullest extent permitted by law, you release and hold harmless The Beast Hunter and
+          To the fullest extent permitted by law, you release and hold harmless The Beast Hunter Challenge and
           all affiliated parties from claims, demands, or causes of action arising from your
           participation, including those caused by ordinary negligence of event staff, except gross
           negligence or wilful misconduct where not waivable.
@@ -79,7 +79,7 @@ export default function TermsOfServicePage() {
           5. Payments &amp; refunds
         </h2>
         <p>
-          Registration fees are processed via Cashfree. Refund eligibility depends on the specific
+          Registration fees are paid via secure manual UPI transfers. Refund eligibility depends on the specific
           event policy and timing of cancellation. Contact{' '}
           <a href="mailto:info@thebeasthunter.in" className="text-gold-premium hover:underline">
             info@thebeasthunter.in

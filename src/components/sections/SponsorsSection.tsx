@@ -25,7 +25,7 @@ export default function SponsorsSection({ sponsors }: SponsorsSectionProps) {
             Sponsorship Open
           </span>
           <h2 className="font-bebas text-3xl sm:text-5xl text-white tracking-wider uppercase mt-2">
-            Partner With <span className="gold-gradient-text">The Beast Hunter</span>
+            Partner With <span className="gold-gradient-text">The Beast Hunter Challenge</span>
           </h2>
           <p className="font-barlow text-base sm:text-lg text-gray-400 mt-4 max-w-2xl mx-auto tracking-wide leading-relaxed">
             Showcase your brand to thousands of fitness enthusiasts and elite athletes. Join us as an official partner for Season 2026.

@@ -83,7 +83,7 @@ export default async function RegisterPage({ params }: PageProps) {
               REGISTER FOR <span className="gold-gradient-text">{event.title}</span>
             </h1>
             <p className="font-barlow text-sm text-gray-400 uppercase tracking-widest mt-2">
-              Fill the form → confirm your slot → pay with Cashfree
+              Fill the form → confirm your slot → Scan and Pay via UPI
             </p>
           </div>
 

@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   tshirt_size VARCHAR(5) CHECK (tshirt_size IN ('XS', 'S', 'M', 'L', 'XL', 'XXL')),
   medical_conditions TEXT,
   id_proof_url TEXT,
+  transaction_id VARCHAR(100),
+  payment_proof_url TEXT,
   waiver_accepted BOOLEAN NOT NULL DEFAULT false,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'rejected')),
   payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),

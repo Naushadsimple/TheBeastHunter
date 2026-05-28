@@ -45,19 +45,19 @@ const PREBUILT_TEMPLATES = [
     id: 'registration_confirm',
     name: 'Registration Confirmation (Pre-built)',
     subject: 'Registration Confirmed: {event}',
-    body: 'Hello {name},\n\nYour registration for {event} has been successfully confirmed!\n\nYour official Bib Code is: {code}\nRegistration Status: {status}\n\nWe look forward to seeing you at the starting line. Stay strong and keep training!\n\nBest regards,\nThe Beast Hunter Team',
+    body: 'Hello {name},\n\nYour registration for {event} has been successfully confirmed!\n\nYour official Bib Code is: {code}\nRegistration Status: {status}\n\nWe look forward to seeing you at the starting line. Stay strong and keep training!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
   {
     id: 'payment_receipt',
     name: 'Payment Receipt (Pre-built)',
     subject: 'Receipt for your payment: {event}',
-    body: 'Hello {name},\n\nWe have successfully received your payment of {price} for {event}.\n\nRegistration Status: {status}\nBib Code: {code}\n\nYour ticket has been officially generated. Get ready to unleash the beast!\n\nBest regards,\nThe Beast Hunter Team',
+    body: 'Hello {name},\n\nWe have successfully received your payment of {price} for {event}.\n\nRegistration Status: {status}\nBib Code: {code}\n\nYour ticket has been officially generated. Get ready to unleash the beast!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
   {
     id: 'event_reminder',
     name: 'Event Day Reminder (Pre-built)',
     subject: 'Important Reminder: {event} is coming up!',
-    body: 'Hello {name},\n\nThis is a friendly reminder that {event} is just around the corner!\n\nDetails:\n- Event: {event}\n- Bib Code: {code}\n- Ticket Price: {price}\n- Status: {status}\n\nPlease ensure you arrive at the venue early and carry your ID proof.\n\nKeep pushing, keep hunting!\n\nBest regards,\nThe Beast Hunter Team',
+    body: 'Hello {name},\n\nThis is a friendly reminder that {event} is just around the corner!\n\nDetails:\n- Event: {event}\n- Bib Code: {code}\n- Ticket Price: {price}\n- Status: {status}\n\nPlease ensure you arrive at the venue early and carry your ID proof.\n\nKeep pushing, keep hunting!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
 ];
 
@@ -94,6 +94,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [viewingProofUrl, setViewingProofUrl] = useState<string | null>(null);
 
   const [showEventModal, setShowEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -369,20 +370,38 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     setMessage({ type: 'success', text: 'Event deleted' });
   };
 
-  const handleRegAction = async (id: string, status: 'confirmed' | 'cancelled') => {
+  const handleRegAction = async (id: string, action: 'approve' | 'reject') => {
     setActionLoading(id);
-    const payment_status = status === 'confirmed' ? 'paid' : 'failed';
-    const { error } = await supabase
-      .from('registrations')
-      .update({ status, payment_status })
-      .eq('id', id);
-    setActionLoading(null);
-    if (error) {
-      setMessage({ type: 'error', text: error.message });
-      return;
+    try {
+      const res = await fetch('/api/admin/verify-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId: id, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Action failed');
+
+      setMessage({ type: 'success', text: data.message });
+      await loadDashboard();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to update registration' });
+    } finally {
+      setActionLoading(null);
     }
-    await loadDashboard();
-    setMessage({ type: 'success', text: `Registration ${status}` });
+  };
+
+  const handleViewProof = async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('id-proofs')
+        .createSignedUrl(path, 600);
+      if (error || !data?.signedUrl) {
+        throw new Error(error?.message || 'Failed to generate secure URL');
+      }
+      setViewingProofUrl(data.signedUrl);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Could not load proof' });
+    }
   };
 
   const handleSaveSponsor = async (e: React.FormEvent) => {
@@ -488,7 +507,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                 Admin Panel
               </h1>
               <p className="text-xs text-gray-500 font-barlow uppercase tracking-wider">
-                The Beast Hunter — live data
+                The Beast Hunter Challenge — live data
               </p>
             </div>
           </div>
@@ -715,6 +734,8 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                     <th className="px-4 py-3">Bib</th>
                     <th className="px-4 py-3">Challenger</th>
                     <th className="px-4 py-3">Event</th>
+                    <th className="px-4 py-3">Txn ID / UTR</th>
+                    <th className="px-4 py-3">Payment Proof</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
@@ -727,8 +748,24 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                         <div className="font-medium text-white">{r.full_name}</div>
                         <div className="text-xs text-gray-500">{r.email} · {r.phone}</div>
                       </td>
-                      <td className="px-4 py-3 text-gold-premium text-xs uppercase">
+                      <td className="px-4 py-3 text-gold-premium text-xs uppercase font-semibold">
                         {r.event_id?.title || '—'}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-400">
+                        {r.transaction_id || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.payment_proof_url ? (
+                          <button
+                            type="button"
+                            onClick={() => handleViewProof(r.payment_proof_url)}
+                            className="text-gold-premium hover:underline text-xs font-bold uppercase transition-all"
+                          >
+                            View Proof
+                          </button>
+                        ) : (
+                          <span className="text-gray-600 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={r.status} />
@@ -755,7 +792,21 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   <StatusBadge status={r.status} />
                 </div>
                 <p className="text-xs text-gray-400">{r.email} · +91 {r.phone}</p>
-                <p className="text-xs text-gold-premium uppercase">{r.event_id?.title}</p>
+                <p className="text-xs text-gold-premium uppercase font-semibold">{r.event_id?.title}</p>
+                {r.transaction_id && (
+                  <p className="text-xs text-gray-300">
+                    <span className="text-gray-500">UTR:</span> <span className="font-mono">{r.transaction_id}</span>
+                  </p>
+                )}
+                {r.payment_proof_url && (
+                  <button
+                    type="button"
+                    onClick={() => handleViewProof(r.payment_proof_url)}
+                    className="text-gold-premium hover:underline text-xs font-bold uppercase block text-left mt-1"
+                  >
+                    View Payment Proof
+                  </button>
+                )}
                 <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
               </div>
             ))}
@@ -1244,6 +1295,30 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
           </form>
         </Modal>
       )}
+
+      {/* Proof viewing modal */}
+      {viewingProofUrl && (
+        <Modal title="Payment Proof Screenshot" onClose={() => setViewingProofUrl(null)}>
+          <div className="flex flex-col items-center justify-center p-2 bg-black/40 rounded-lg">
+            <div className="relative w-full h-[60vh] max-h-[500px] flex items-center justify-center overflow-hidden rounded bg-black/20">
+              <img
+                src={viewingProofUrl}
+                alt="Payment proof screenshot"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <div className="w-full flex justify-end mt-4">
+              <button
+                type="button"
+                onClick={() => setViewingProofUrl(null)}
+                className="px-6 py-2 bg-gold-premium text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all font-barlow"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -1269,7 +1344,7 @@ function RegActions({
 }: {
   reg: any;
   loading: string | null;
-  onAction: (id: string, s: 'confirmed' | 'cancelled') => void;
+  onAction: (id: string, action: 'approve' | 'reject') => void;
 }) {
   if (reg.status !== 'pending') return null;
   return (
@@ -1277,17 +1352,26 @@ function RegActions({
       <button
         type="button"
         disabled={loading === reg.id}
-        onClick={() => onAction(reg.id, 'confirmed')}
-        className="p-2 bg-green-500/10 text-green-400 rounded"
+        onClick={() => onAction(reg.id, 'approve')}
+        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-barlow text-xs font-bold uppercase rounded flex items-center gap-1 transition-all"
+        title="Approve Challenger"
       >
-        {loading === reg.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+        {loading === reg.id ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="w-3.5 h-3.5" />
+        )}
+        <span>Approve</span>
       </button>
       <button
         type="button"
-        onClick={() => onAction(reg.id, 'cancelled')}
-        className="p-2 bg-red-500/10 text-red-400 rounded"
+        disabled={loading === reg.id}
+        onClick={() => onAction(reg.id, 'reject')}
+        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-barlow text-xs font-bold uppercase rounded flex items-center gap-1 transition-all"
+        title="Reject Challenger"
       >
-        <XCircle className="w-4 h-4" />
+        <XCircle className="w-3.5 h-3.5" />
+        <span>Reject</span>
       </button>
     </div>
   );
