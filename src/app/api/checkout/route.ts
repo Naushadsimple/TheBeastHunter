@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       .from('registrations')
       .select('id', { count: 'exact', head: true })
       .eq('event_id', eventId)
-      .in('status', ['confirmed', 'pending']);
+      .eq('status', 'confirmed');
 
     if (
       event.max_participants &&

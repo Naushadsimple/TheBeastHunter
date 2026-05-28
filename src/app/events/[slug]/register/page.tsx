@@ -39,7 +39,7 @@ export default async function RegisterPage({ params }: PageProps) {
     .from('registrations')
     .select('id', { count: 'exact', head: true })
     .eq('event_id', dbEvent.id)
-    .in('status', ['confirmed', 'pending']);
+    .eq('status', 'confirmed');
 
   const spotsLeft =
     dbEvent.max_participants != null

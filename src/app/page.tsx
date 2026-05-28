@@ -45,7 +45,7 @@ export default async function Home() {
             .from('registrations')
             .select('id', { count: 'exact', head: true })
             .eq('event_id', event.id)
-            .in('status', ['confirmed', 'pending']); // Count active/pending registrations
+            .eq('status', 'confirmed'); // Count only approved/confirmed registrations
 
           return {
             ...event,

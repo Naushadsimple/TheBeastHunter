@@ -66,7 +66,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
             .from('registrations')
             .select('id', { count: 'exact', head: true })
             .eq('event_id', event.id)
-            .in('status', ['confirmed', 'pending']);
+            .eq('status', 'confirmed');
 
           return {
             ...event,

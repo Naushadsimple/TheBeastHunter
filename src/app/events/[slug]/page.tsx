@@ -50,7 +50,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
         .from('registrations')
         .select('id', { count: 'exact', head: true })
         .eq('event_id', dbEvent.id)
-        .in('status', ['confirmed', 'pending']);
+        .eq('status', 'confirmed');
 
       registrationCount = count || 0;
       

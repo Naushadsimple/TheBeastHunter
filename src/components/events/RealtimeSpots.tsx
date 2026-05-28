@@ -21,7 +21,7 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
           .from('registrations')
           .select('id', { count: 'exact', head: true })
           .eq('event_id', eventId)
-          .in('status', ['confirmed', 'pending']);
+          .eq('status', 'confirmed');
         
         if (!error && freshCount !== null) {
           setCount(freshCount);
