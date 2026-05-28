@@ -17,6 +17,7 @@ import {
   Check,
   FileImage,
   Info,
+  Download,
 } from 'lucide-react';
 import { DBEvent } from '@/components/sections/UpcomingRaces';
 
@@ -207,7 +208,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
 
   const totalAmount = event.ticket_price;
   const upiLink = `upi://pay?pa=ravitiwari8421787508@okhdfcbank&pn=The%20Beast%20Hunter%20Challenge&am=${totalAmount}&cu=INR`;
-  const qrCodeImageUrl = '/payment-qr1.png';
+  const qrCodeImageUrl = '/payment-qr3.png';
 
   return (
     <div className="bg-dark-gray/30 border border-white/5 rounded-lg p-6 sm:p-10 relative overflow-hidden">
@@ -511,28 +512,28 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-black/40 rounded-xl border border-white/10">
                 <div className="bg-white p-3 rounded-lg shadow-lg relative">
                   {qrCodeImageUrl ? (
-                    <a
-                      href={upiLink}
-                      className="block relative z-10 group cursor-pointer"
-                      title="Click to pay directly via UPI app"
-                    >
-                      <img
-                        src={qrCodeImageUrl}
-                        alt="UPI QR Code"
-                        className="w-48 h-48 sm:w-56 sm:h-56 transition-transform group-hover:scale-[1.03] duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded">
-                        <span className="bg-black/80 text-white text-[10px] uppercase font-bold px-2 py-1 rounded border border-white/20">
-                          Pay Directly
-                        </span>
-                      </div>
-                    </a>
+                    <img
+                      src={qrCodeImageUrl}
+                      alt="UPI QR Code"
+                      className="w-48 h-48 sm:w-56 sm:h-56"
+                    />
                   ) : (
                     <div className="w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center bg-gray-200">
                       <QrCode className="w-12 h-12 text-black animate-pulse" />
                     </div>
                   )}
                 </div>
+
+                {qrCodeImageUrl && (
+                  <a
+                    href={qrCodeImageUrl}
+                    download="payment-qr.png"
+                    className="mt-3 flex items-center gap-1.5 font-barlow text-xs font-bold uppercase tracking-wider text-gold-premium hover:text-gold-premium/80 hover:underline transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download QR Code</span>
+                  </a>
+                )}
                 <p className="font-barlow text-[10px] text-gray-500 uppercase tracking-widest mt-3 text-center">
                   Scan using GPay, PhonePe, Paytm or BHIM
                 </p>
