@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
+
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import { 
@@ -36,7 +36,7 @@ function SuccessContent() {
   const [eventData, setEventData] = useState<any>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
+
 
   useEffect(() => {
     if (!orderId && !registrationIdParam) {
@@ -47,55 +47,22 @@ function SuccessContent() {
 
     const fetchOrderDetails = async () => {
       try {
-        let finalReg: any = null;
+        const params = new URLSearchParams();
+        if (orderId) params.set('order_id', orderId);
+        if (registrationIdParam) params.set('registration_id', registrationIdParam);
 
-        // 1. If registration_id is provided directly in URL, fetch it
-        if (registrationIdParam) {
-          const { data: reg, error: regError } = await supabase
-            .from('registrations')
-            .select('*, event_id(*)')
-            .eq('id', registrationIdParam)
-            .maybeSingle();
-          if (reg) finalReg = reg;
-        }
+        const res = await fetch(`/api/order-details?${params.toString()}`);
+        const data = await res.json();
 
-        // 2. Fallback to orderId query
-        if (!finalReg && orderId) {
-          // Fetch payment record first
-          const { data: payment } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('cashfree_order_id', orderId)
-            .maybeSingle();
-
-          if (payment) {
-            const { data: correlatedReg } = await supabase
-              .from('registrations')
-              .select('*, event_id(*)')
-              .eq('id', payment.registration_id)
-              .maybeSingle();
-            if (correlatedReg) finalReg = correlatedReg;
-          }
-
-          // Direct registration correlation fallback
-          if (!finalReg) {
-            const { data: regByCode } = await supabase
-              .from('registrations')
-              .select('*, event_id(*)')
-              .eq('registration_code', orderId.replace('TBH-', 'REG-'))
-              .maybeSingle();
-            if (regByCode) finalReg = regByCode;
-          }
-        }
-
-        if (!finalReg) {
-          setError('Unable to retrieve registration records. Please check your Dashboard.');
+        if (!res.ok || !data.registration) {
+          setError(data.message || 'Unable to retrieve registration records. Please check your Dashboard.');
           setLoading(false);
           return;
         }
 
+        const finalReg = data.registration;
         setRegistration(finalReg);
-        setEventData(finalReg.event_id);
+        setEventData(data.event);
 
         // Set status
         if (finalReg.status === 'confirmed' || finalReg.payment_status === 'paid') {
@@ -107,7 +74,7 @@ function SuccessContent() {
           const qrData = JSON.stringify({
             code: finalReg.registration_code,
             name: finalReg.full_name,
-            event: finalReg.event_id.title,
+            event: data.event?.title,
             status: 'CONFIRMED'
           });
           const qrUrl = await QRCode.toDataURL(qrData, {

@@ -82,9 +82,17 @@ export default function Footer() {
 
       <div className="border-t border-gold-premium/10 bg-black/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-center md:text-left">
-            &copy; {currentYear} The Beast Hunter Challenge. All Rights Reserved.
-          </p>
+        <p className="text-xs text-center md:text-left">
+  &copy; {currentYear} The Beast Hunter Challenge.{" "}
+  <a 
+    href="https://naushadwork.netlify.app" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="hover:underline"
+  >
+    All Rights Reserved.
+  </a>
+</p>
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
