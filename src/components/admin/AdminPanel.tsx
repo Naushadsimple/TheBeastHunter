@@ -95,6 +95,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [viewingProofUrl, setViewingProofUrl] = useState<string | null>(null);
+  const [viewingReg, setViewingReg] = useState<any | null>(null);
 
   const [showEventModal, setShowEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -771,7 +772,16 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                         <StatusBadge status={r.status} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
+                        <div className="flex justify-end items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setViewingReg(r)}
+                            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-barlow text-xs font-bold uppercase rounded transition-all"
+                          >
+                            Details
+                          </button>
+                          <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -807,7 +817,16 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                     View Payment Proof
                   </button>
                 )}
-                <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
+                <div className="flex flex-col gap-2 mt-3 pt-2 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setViewingReg(r)}
+                    className="w-full py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-barlow text-xs font-bold uppercase rounded transition-all"
+                  >
+                    View Details
+                  </button>
+                  <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
+                </div>
               </div>
             ))}
           </div>
@@ -1319,6 +1338,148 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
           </div>
         </Modal>
       )}
+
+      {/* Challenger details modal */}
+      {viewingReg && (() => {
+        const orderId = viewingReg.payments?.[0]?.cashfree_order_id || '—';
+        const orderLink = orderId !== '—'
+          ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/payment/success?order_id=${orderId}`
+          : null;
+
+        return (
+          <Modal title="Challenger Details" onClose={() => setViewingReg(null)}>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Bib / Reg Code</span>
+                  <span className="text-white font-mono text-sm font-semibold">{viewingReg.registration_code || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Status</span>
+                  <div className="mt-1">
+                    <StatusBadge status={viewingReg.status} />
+                  </div>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg sm:col-span-2">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Event</span>
+                  <span className="text-gold-premium text-sm font-semibold uppercase">{viewingReg.event_id?.title || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Full Name</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.full_name || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Email</span>
+                  <span className="text-white text-sm font-semibold break-all">{viewingReg.email || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Phone</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.phone ? `+91 ${viewingReg.phone}` : '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Instagram ID</span>
+                  {viewingReg.insta_id ? (
+                    <a
+                      href={`https://instagram.com/${viewingReg.insta_id.replace(/^@/, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gold-premium hover:underline text-sm font-semibold block"
+                    >
+                      {viewingReg.insta_id}
+                    </a>
+                  ) : (
+                    <span className="text-gray-400 text-sm font-semibold">—</span>
+                  )}
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Age</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.age ?? '—'} years</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Gender</span>
+                  <span className="text-white text-sm font-semibold capitalize">{viewingReg.gender || 'male'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">City</span>
+                  <span className="text-white text-sm font-semibold capitalize">{viewingReg.city || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">T-Shirt Size</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.tshirt_size || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Medical Conditions / Blood Group</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.medical_conditions || 'None'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Emergency Contact</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.emergency_contact || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Emergency Phone</span>
+                  <span className="text-white text-sm font-semibold">{viewingReg.emergency_phone ? `+91 ${viewingReg.emergency_phone}` : '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Transaction / UTR ID</span>
+                  <span className="text-white font-mono text-sm font-semibold">{viewingReg.transaction_id || '—'}</span>
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Payment Proof</span>
+                  {viewingReg.payment_proof_url ? (
+                    <button
+                      type="button"
+                      onClick={() => handleViewProof(viewingReg.payment_proof_url)}
+                      className="text-gold-premium hover:underline text-sm font-semibold block text-left"
+                    >
+                      View Screenshot Proof
+                    </button>
+                  ) : (
+                    <span className="text-gray-400 text-sm">—</span>
+                  )}
+                </div>
+                <div className="bg-black/40 border border-white/5 p-3 rounded-lg sm:col-span-2">
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Order ID</span>
+                  <span className="text-white font-mono text-sm font-semibold">{orderId}</span>
+                </div>
+                {orderLink && (
+                  <div className="bg-black/40 border border-white/5 p-3 rounded-lg sm:col-span-2">
+                    <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Success Order Link</span>
+                    <a
+                      href={orderLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gold-premium hover:underline text-xs font-mono break-all font-semibold block mt-1"
+                    >
+                      {orderLink}
+                    </a>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-white/10 mt-6">
+                <div>
+                  {viewingReg.status === 'pending' && (
+                    <RegActions
+                      reg={viewingReg}
+                      loading={actionLoading}
+                      onAction={(id, action) => {
+                        handleRegAction(id, action);
+                        setViewingReg(null);
+                      }}
+                    />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingReg(null)}
+                  className="w-full sm:w-auto px-6 py-2 bg-gold-premium text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all font-barlow self-end"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

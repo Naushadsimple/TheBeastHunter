@@ -42,7 +42,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
     email: user?.email || '',
     phone: '',
     dob: '',
-    gender: 'male',
+    instaId: '',
     city: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
@@ -69,7 +69,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
   };
 
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText('shaikhnaushuu78636@okaxis');
+    navigator.clipboard.writeText('gasuvarna-4@oksbi');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -179,7 +179,8 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
             email: formData.email.trim().toLowerCase(),
             phone: formData.phone.replace(/\D/g, '').slice(-10),
             dob: formData.dob,
-            gender: formData.gender,
+            gender: 'male',
+            instaId: formData.instaId.trim(),
             city: formData.city,
             emergencyContactName: formData.emergencyContactName.trim(),
             emergencyContactPhone: formData.emergencyContactPhone.replace(/\D/g, '').slice(-10),
@@ -205,8 +206,8 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
   };
 
   const totalAmount = event.ticket_price;
-  const upiLink = `upi://pay?pa=shaikhnaushuu78636@okaxis&pn=The%20Beast%20Hunter%20Challenge&am=${totalAmount}&cu=INR`;
-  const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiLink)}`;
+  const upiLink = `upi://pay?pa=gasuvarna-4@oksbi&pn=The%20Beast%20Hunter%20Challenge&am=${totalAmount}&cu=INR`;
+  const qrCodeImageUrl = '/payment-qr.png';
 
   return (
     <div className="bg-dark-gray/30 border border-white/5 rounded-lg p-6 sm:p-10 relative overflow-hidden">
@@ -310,18 +311,16 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               </div>
               <div className="space-y-1.5">
                 <label className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
-                  Gender
+                  Instagram ID
                 </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
+                <input
+                  type="text"
+                  name="instaId"
+                  value={formData.instaId}
                   onChange={handleChange}
+                  placeholder="@yourusername"
                   className="bg-black/40 border border-white/10 text-white px-4 py-3 rounded w-full text-sm focus:outline-none focus:border-gold-premium"
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest">
@@ -566,7 +565,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                     <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-semibold">
                       UPI ID / VPA
                     </span>
-                    <span className="text-white font-mono font-bold">shaikhnaushuu78636@okaxis</span>
+                    <span className="text-white font-mono font-bold">gasuvarna-4@oksbi</span>
                   </div>
                   <button
                     type="button"

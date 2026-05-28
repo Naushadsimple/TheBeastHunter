@@ -20,7 +20,7 @@ export async function GET() {
       db.from('events').select('*').order('event_date', { ascending: true }),
       db
         .from('registrations')
-        .select('*, event_id(id, title, slug, event_date)')
+        .select('*, event_id(id, title, slug, event_date), payments(cashfree_order_id, status)')
         .order('created_at', { ascending: false }),
       db.from('sponsors').select('*').order('display_order', { ascending: true }),
       db.from('payments').select('total_amount, status').eq('status', 'success'),

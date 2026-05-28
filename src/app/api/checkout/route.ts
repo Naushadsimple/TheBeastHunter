@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
         phone,
         age,
         gender: registrationData.gender || 'male',
+        insta_id: registrationData.instaId || null,
         city: registrationData.city || 'Not Specified',
         emergency_contact: registrationData.emergencyContactName || 'Emergency',
         emergency_phone: String(registrationData.emergencyContactPhone || '').replace(/\D/g, '').slice(-10) || phone,
