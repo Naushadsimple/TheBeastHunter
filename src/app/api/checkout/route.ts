@@ -107,16 +107,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { count: regCount } = await supabase
-      .from('registrations')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', eventId)
-      .eq('status', 'confirmed');
+    const displayedCount = event.displayed_slot_count || 0;
 
     if (
       event.max_participants &&
-      regCount !== null &&
-      regCount >= event.max_participants
+      displayedCount >= event.max_participants
     ) {
       return NextResponse.json({ message: 'This event is sold out' }, { status: 400 });
     }

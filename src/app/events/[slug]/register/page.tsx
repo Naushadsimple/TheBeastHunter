@@ -35,15 +35,9 @@ export default async function RegisterPage({ params }: PageProps) {
     distance_km: Number(dbEvent.distance_km),
   };
 
-  const { count: registrationCount } = await supabase
-    .from('registrations')
-    .select('id', { count: 'exact', head: true })
-    .eq('event_id', dbEvent.id)
-    .eq('status', 'confirmed');
-
   const spotsLeft =
     dbEvent.max_participants != null
-      ? Math.max(0, dbEvent.max_participants - (registrationCount || 0))
+      ? Math.max(0, dbEvent.max_participants - (dbEvent.displayed_slot_count || 0))
       : null;
 
   const registrationClosed =

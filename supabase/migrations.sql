@@ -286,3 +286,18 @@ CREATE POLICY "Allow admins full access to storage" ON storage.objects FOR ALL T
 
 -- Example: Set specific email as admin (uncomment and modify as needed)
 -- UPDATE public.users SET role = 'admin' WHERE email = 'shaikhnaushuu78636@gmail.com';
+
+-- 6. Slot Override System Columns (Added 2026-06-01)
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS actual_registered_count INTEGER DEFAULT 0 NOT NULL;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS displayed_slot_count INTEGER DEFAULT 0 NOT NULL;
+
+-- Initial seeding: update actual_registered_count for each event based on count of 'confirmed' registrations
+UPDATE public.events e
+SET actual_registered_count = COALESCE(
+  (SELECT COUNT(*) FROM public.registrations r WHERE r.event_id = e.id AND r.status = 'confirmed'),
+  0
+);
+
+-- Update displayed_slot_count to be same as actual registrations initially
+UPDATE public.events e
+SET displayed_slot_count = actual_registered_count;

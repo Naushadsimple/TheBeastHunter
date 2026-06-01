@@ -45,14 +45,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
       .single();
 
     if (!error && dbEvent) {
-      // Fetch registrations count
-      const { count } = await supabase
-        .from('registrations')
-        .select('id', { count: 'exact', head: true })
-        .eq('event_id', dbEvent.id)
-        .eq('status', 'confirmed');
-
-      registrationCount = count || 0;
+      registrationCount = dbEvent.displayed_slot_count || 0;
       
       // Parse JSON fields safely
       const parsedSchedule = typeof dbEvent.schedule === 'string' ? JSON.parse(dbEvent.schedule) : dbEvent.schedule;

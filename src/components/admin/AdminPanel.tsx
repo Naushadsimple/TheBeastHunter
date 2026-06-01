@@ -26,9 +26,10 @@ import {
   Handshake,
   Menu,
   Mail,
+  Sliders,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail';
+type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail' | 'slots';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -67,6 +68,7 @@ const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'challengers', label: 'Challengers', icon: UserCheck },
   { id: 'sponsors', label: 'Sponsors', icon: Handshake },
   { id: 'mail', label: 'Mail Center', icon: Mail },
+  { id: 'slots', label: 'Manage Slots', icon: Sliders },
 ];
 
 export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) {
@@ -134,6 +136,44 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ name: '', subject: '', body: '' });
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Manage Slots states
+  const [showSlotsModal, setShowSlotsModal] = useState(false);
+  const [selectedEventForSlots, setSelectedEventForSlots] = useState<any | null>(null);
+  const [overrideSlotsValue, setOverrideSlotsValue] = useState<string>('');
+  const [updatingSlots, setUpdatingSlots] = useState(false);
+
+  const handleUpdateSlots = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEventForSlots) return;
+
+    const newSlots = parseInt(overrideSlotsValue, 10);
+    if (isNaN(newSlots) || newSlots < 0) {
+      setMessage({ type: 'error', text: 'Please enter a valid non-negative number' });
+      return;
+    }
+
+    setUpdatingSlots(true);
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ displayed_slot_count: newSlots })
+        .eq('id', selectedEventForSlots.id);
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: `Slots override updated successfully for ${selectedEventForSlots.title}!` });
+      setShowSlotsModal(false);
+      setSelectedEventForSlots(null);
+      setOverrideSlotsValue('');
+      await loadDashboard();
+    } catch (err: any) {
+      console.error('Error updating slots:', err);
+      setMessage({ type: 'error', text: err.message || 'Failed to update slots' });
+    } finally {
+      setUpdatingSlots(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1188,6 +1228,125 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
         </div>
       )}
 
+      {/* Manage Slots */}
+      {activeTab === 'slots' && (
+        <div className="space-y-6 animate-in fade-in">
+          <div>
+            <h2 className="font-bebas text-2xl text-white uppercase flex items-center gap-2">
+              <Sliders className="w-6 h-6 text-gold-premium" />
+              Manage slots overrides
+            </h2>
+            <p className="text-xs text-gray-500 font-barlow uppercase tracking-wider mt-1">
+              Override displayed slot counts shown to users on event details and cards
+            </p>
+          </div>
+
+          <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden">
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-black/40 text-xs font-barlow font-bold uppercase tracking-wider text-gray-400 border-b border-white/10">
+                  <tr>
+                    <th className="px-6 py-4">Event Details</th>
+                    <th className="px-6 py-4 text-center">Actual Registrations</th>
+                    <th className="px-6 py-4 text-center">Displayed Slots (Filled)</th>
+                    <th className="px-6 py-4 text-center">Max Capacity</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-barlow">
+                  {events.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500 uppercase tracking-widest">
+                        No events found
+                      </td>
+                    </tr>
+                  ) : (
+                    events.map((event) => (
+                      <tr key={event.id} className="hover:bg-white/[2%] transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-white uppercase tracking-wide">{event.title}</div>
+                          <div className="text-xs text-gray-500 font-mono mt-0.5">{event.slug}</div>
+                        </td>
+                        <td className="px-6 py-4 text-center text-sm font-semibold text-white">
+                          {event.actual_registered_count || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center text-sm font-semibold text-gold-premium">
+                          {event.displayed_slot_count || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center text-sm text-gray-400">
+                          {event.max_participants || 'Unlimited'}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedEventForSlots(event);
+                              setOverrideSlotsValue(String(event.displayed_slot_count || 0));
+                              setShowSlotsModal(true);
+                            }}
+                            className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-1.5 rounded transition-all active:scale-95 inline-flex items-center gap-1.5"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            Edit Slots
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile list view */}
+            <div className="sm:hidden divide-y divide-white/5">
+              {events.length === 0 ? (
+                <div className="p-6 text-center text-gray-500 uppercase tracking-widest font-barlow text-sm">
+                  No events found
+                </div>
+              ) : (
+                events.map((event) => (
+                  <div key={event.id} className="p-4 space-y-3 font-barlow">
+                    <div>
+                      <div className="font-bold text-white uppercase tracking-wide text-sm">{event.title}</div>
+                      <div className="text-[11px] text-gray-500 font-mono mt-0.5">{event.slug}</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 bg-black/20 p-2.5 rounded-lg text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Actual</span>
+                        <span className="text-white text-sm font-semibold">{event.actual_registered_count || 0}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Displayed</span>
+                        <span className="text-gold-premium text-sm font-semibold">{event.displayed_slot_count || 0}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Capacity</span>
+                        <span className="text-gray-400 text-sm font-semibold">{event.max_participants || '∞'}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEventForSlots(event);
+                          setOverrideSlotsValue(String(event.displayed_slot_count || 0));
+                          setShowSlotsModal(true);
+                        }}
+                        className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-2 rounded transition-all active:scale-95 flex items-center justify-center gap-1.5 w-full"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        Edit Slots
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Custom Template Modal */}
       {showTemplateModal && (
         <Modal title="Create Custom Template" onClose={() => setShowTemplateModal(false)}>
@@ -1336,6 +1495,71 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
               </button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* Edit slots override modal */}
+      {showSlotsModal && selectedEventForSlots && (
+        <Modal title={`Manage Slots: ${selectedEventForSlots.title}`} onClose={() => { setShowSlotsModal(false); setSelectedEventForSlots(null); }}>
+          <form onSubmit={handleUpdateSlots} className="space-y-4">
+            <div className="space-y-4">
+              <div className="bg-black/40 border border-white/5 p-4 rounded-lg space-y-3">
+                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
+                  <span>Actual Registrations:</span>
+                  <span className="text-white text-sm">{selectedEventForSlots.actual_registered_count || 0}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
+                  <span>Current Displayed Slots:</span>
+                  <span className="text-gold-premium text-sm">{selectedEventForSlots.displayed_slot_count || 0}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400 border-t border-white/5 pt-2">
+                  <span>Max Capacity (Max Participants):</span>
+                  <span className="text-white text-sm">{selectedEventForSlots.max_participants || 'Unlimited'}</span>
+                </div>
+              </div>
+
+              <label className="block space-y-2">
+                <span className="text-xs text-gray-400 font-barlow font-bold uppercase tracking-wider">
+                  New Displayed Slots Count
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={overrideSlotsValue}
+                  onChange={(e) => setOverrideSlotsValue(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
+                  placeholder="Enter slot count to display..."
+                />
+              </label>
+              <p className="text-[11px] text-gray-500 font-barlow uppercase leading-relaxed">
+                Note: This value overrides what users see on the event card and details page. Setting this to 30 will show "30 Slots Filled".
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-white/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setShowSlotsModal(false); setSelectedEventForSlots(null); }}
+                className="px-4 py-2 text-xs text-gray-400 uppercase hover:text-white transition-colors font-barlow font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updatingSlots}
+                className="px-6 py-2 gold-gradient-bg text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none font-barlow"
+              >
+                {updatingSlots ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Slots'
+                )}
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
 

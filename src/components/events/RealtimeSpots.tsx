@@ -17,14 +17,14 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
   useEffect(() => {
     async function fetchFreshCount() {
       try {
-        const { count: freshCount, error } = await supabase
-          .from('registrations')
-          .select('id', { count: 'exact', head: true })
-          .eq('event_id', eventId)
-          .eq('status', 'confirmed');
+        const { data: freshEvent, error } = await supabase
+          .from('events')
+          .select('displayed_slot_count')
+          .eq('id', eventId)
+          .single();
         
-        if (!error && freshCount !== null) {
-          setCount(freshCount);
+        if (!error && freshEvent) {
+          setCount(freshEvent.displayed_slot_count || 0);
         }
       } catch (err) {
         console.error('Error fetching fresh count:', err);
@@ -33,7 +33,7 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
 
     fetchFreshCount();
 
-    // Subscribe to registrations modifications for this specific event
+    // Subscribe to events modifications for this specific event
     const channel = supabase
       .channel(`spots-sync-${eventId}`)
       .on(
@@ -41,11 +41,15 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
         {
           event: '*',
           schema: 'public',
-          table: 'registrations',
-          filter: `event_id=eq.${eventId}`,
+          table: 'events',
+          filter: `id=eq.${eventId}`,
         },
-        () => {
-          fetchFreshCount();
+        (payload) => {
+          if (payload.new && (payload.new as any).displayed_slot_count !== undefined) {
+            setCount((payload.new as any).displayed_slot_count || 0);
+          } else {
+            fetchFreshCount();
+          }
         }
       )
       .subscribe();

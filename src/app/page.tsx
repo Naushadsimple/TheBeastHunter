@@ -31,29 +31,18 @@ export default async function Home() {
         difficulty,
         ticket_price,
         max_participants,
-        status
+        status,
+        displayed_slot_count
       `)
       .eq('status', 'published')
       .order('event_date', { ascending: true })
       .limit(3);
 
     if (!error && dbEvents) {
-      // Query registration counts for each event
-      const eventsWithCounts = await Promise.all(
-        dbEvents.map(async (event) => {
-          const { count } = await supabase
-            .from('registrations')
-            .select('id', { count: 'exact', head: true })
-            .eq('event_id', event.id)
-            .eq('status', 'confirmed'); // Count only approved/confirmed registrations
-
-          return {
-            ...event,
-            registration_count: count || 0,
-          };
-        })
-      );
-      events = eventsWithCounts;
+      events = dbEvents.map((event) => ({
+        ...event,
+        registration_count: event.displayed_slot_count || 0,
+      }));
     }
 
     const { data: sponsorRows } = await supabase

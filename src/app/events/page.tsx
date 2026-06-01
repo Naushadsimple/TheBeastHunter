@@ -41,7 +41,8 @@ export default async function EventsPage({ searchParams }: PageProps) {
         difficulty,
         ticket_price,
         max_participants,
-        status
+        status,
+        displayed_slot_count
       `)
       .eq('status', 'published')
       .order('event_date', { ascending: true });
@@ -59,24 +60,11 @@ export default async function EventsPage({ searchParams }: PageProps) {
     const { data: dbEvents, error } = await query;
 
     if (!error && dbEvents) {
-      // Map registration counts
-      const eventsWithCounts = await Promise.all(
-        dbEvents.map(async (event) => {
-          const { count } = await supabase
-            .from('registrations')
-            .select('id', { count: 'exact', head: true })
-            .eq('event_id', event.id)
-            .eq('status', 'confirmed');
-
-          return {
-            ...event,
-            registration_count: count || 0,
-            distance_km: Number(event.distance_km), // Ensure float
-          };
-        })
-      );
-
-      events = eventsWithCounts as DBEvent[];
+      events = dbEvents.map((event) => ({
+        ...event,
+        registration_count: event.displayed_slot_count || 0,
+        distance_km: Number(event.distance_km), // Ensure float
+      })) as DBEvent[];
 
       // Apply distance filter programmatically if specified (easier than complex SQL filters on client)
       if (distanceQuery && distanceQuery !== 'all') {

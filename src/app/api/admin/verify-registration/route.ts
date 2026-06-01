@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     // 1. Fetch registration
     const { data: registration, error: regError } = await db
       .from('registrations')
-      .select('*, event_id(title, ticket_price)')
+      .select('*, event_id(id, title, ticket_price)')
       .eq('id', registrationId)
       .single();
 
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString();
     const eventTitle = registration.event_id?.title || 'The Beast Hunter Challenge Event';
+    const targetEventId = registration.event_id?.id || registration.event_id;
 
     if (action === 'approve') {
       // 2. Update registration status
@@ -54,6 +55,37 @@ export async function POST(request: Request) {
           updated_at: now,
         })
         .eq('registration_id', registrationId);
+
+      // --- AUTOMATIC SLOT SYNCHRONIZATION (APPROVE) ---
+      if (targetEventId) {
+        // Query the count of confirmed registrations for this event
+        const { count: confirmedCount } = await db
+          .from('registrations')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', targetEventId)
+          .eq('status', 'confirmed');
+
+        const actualCount = confirmedCount || 0;
+
+        // Query the current displayed slot count
+        const { data: eventData } = await db
+          .from('events')
+          .select('displayed_slot_count')
+          .eq('id', targetEventId)
+          .single();
+
+        const currentDisplayed = eventData?.displayed_slot_count || 0;
+
+        // Update both fields in the events table
+        await db
+          .from('events')
+          .update({
+            actual_registered_count: actualCount,
+            displayed_slot_count: currentDisplayed + 1,
+            updated_at: now,
+          })
+          .eq('id', targetEventId);
+      }
 
       // Fetch payment record to obtain the cashfree_order_id (order ID)
       const { data: payment } = await db
@@ -112,6 +144,27 @@ export async function POST(request: Request) {
           updated_at: now,
         })
         .eq('registration_id', registrationId);
+
+      // --- AUTOMATIC SLOT SYNCHRONIZATION (REJECT) ---
+      if (targetEventId) {
+        // Query the count of confirmed registrations for this event
+        const { count: confirmedCount } = await db
+          .from('registrations')
+          .select('id', { count: 'exact', head: true })
+          .eq('event_id', targetEventId)
+          .eq('status', 'confirmed');
+
+        const actualCount = confirmedCount || 0;
+
+        // Update the actual_registered_count field in the events table
+        await db
+          .from('events')
+          .update({
+            actual_registered_count: actualCount,
+            updated_at: now,
+          })
+          .eq('id', targetEventId);
+      }
 
       const { sendRejectionEmail } = await import('@/lib/mail');
       const mailResult = await sendRejectionEmail(registration.email, registration, registration.event_id);

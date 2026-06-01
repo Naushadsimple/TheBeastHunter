@@ -527,7 +527,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                 {qrCodeImageUrl && (
                   <a
                     href={qrCodeImageUrl}
-                    download="payment-qr.png"
+                    download="payment-qr3.png"
                     className="mt-3 flex items-center gap-1.5 font-barlow text-xs font-bold uppercase tracking-wider text-gold-premium hover:text-gold-premium/80 hover:underline transition-colors cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
