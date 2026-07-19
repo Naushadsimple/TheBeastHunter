@@ -27,9 +27,10 @@ import {
   Menu,
   Mail,
   Sliders,
+  Archive,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail' | 'slots';
+type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail' | 'slots' | 'archive';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -69,6 +70,7 @@ const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'sponsors', label: 'Sponsors', icon: Handshake },
   { id: 'mail', label: 'Mail Center', icon: Mail },
   { id: 'slots', label: 'Manage Slots', icon: Sliders },
+  { id: 'archive', label: 'Old Data / Archive', icon: Archive },
 ];
 
 export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) {
@@ -364,6 +366,13 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       r.phone?.includes(q)
     );
   });
+
+  const activeRegs = filteredRegs.filter(
+    (r) =>
+      r.event_id?.status === 'published' ||
+      r.event_id?.id === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' ||
+      (r.event_id?.status !== 'archived' && r.event_id?.status !== 'completed' && !r.event_id?.title?.includes('Palghar'))
+  );
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -782,7 +791,14 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredRegs.map((r) => (
+                  {activeRegs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-gray-500 uppercase tracking-widest font-barlow">
+                        No active registrations found in database
+                      </td>
+                    </tr>
+                  ) : (
+                    activeRegs.map((r) => (
                     <tr key={r.id} className="text-gray-300 hover:bg-white/5">
                       <td className="px-4 py-3 font-mono text-xs">{r.registration_code}</td>
                       <td className="px-4 py-3">
@@ -824,7 +840,8 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             </div>
@@ -832,7 +849,12 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
 
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
-            {filteredRegs.map((r) => (
+            {activeRegs.length === 0 ? (
+              <div className="bg-dark-gray/40 border border-white/10 rounded-xl p-6 text-center text-gray-500 text-xs font-barlow uppercase tracking-widest">
+                No active registrations found in database
+              </div>
+            ) : (
+              activeRegs.map((r) => (
               <div key={r.id} className="bg-dark-gray/40 border border-white/10 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -868,7 +890,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   <RegActions reg={r} loading={actionLoading} onAction={handleRegAction} />
                 </div>
               </div>
-            ))}
+            )))}
           </div>
 
           {filteredRegs.length === 0 && (
@@ -1342,6 +1364,140 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Old Data / Archive Tab */}
+      {activeTab === 'archive' && (
+        <div className="space-y-8 animate-in fade-in">
+          <div>
+            <h2 className="font-bebas text-2xl text-white uppercase flex items-center gap-2">
+              <Archive className="w-6 h-6 text-gold-premium" />
+              Old Data & Archived Events
+            </h2>
+            <p className="text-xs text-gray-500 font-barlow uppercase tracking-wider mt-1">
+              Separated historical events, registrations, and payment logs from past Beast Hunter challenges
+            </p>
+          </div>
+
+          {/* Archived Events */}
+          <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden p-6 space-y-4">
+            <h3 className="font-bebas text-xl text-white uppercase tracking-wide flex items-center gap-2">
+              <Flame className="w-5 h-5 text-gold-premium" /> Past / Archived Events
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left font-barlow">
+                <thead className="bg-black/40 text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-white/10">
+                  <tr>
+                    <th className="px-4 py-3">Event Title</th>
+                    <th className="px-4 py-3">City</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-center">Registrations</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {events.filter(e => e.status === 'archived' || e.status === 'cancelled').length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-6 text-center text-gray-500 uppercase tracking-widest">
+                        No archived events found
+                      </td>
+                    </tr>
+                  ) : (
+                    events
+                      .filter(e => e.status === 'archived' || e.status === 'cancelled')
+                      .map(ev => (
+                        <tr key={ev.id} className="hover:bg-white/[2%]">
+                          <td className="px-4 py-3 font-bold text-white uppercase">{ev.title}</td>
+                          <td className="px-4 py-3 text-gray-400">{ev.city || 'Palghar'}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 rounded text-xs uppercase font-bold">
+                              {ev.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center font-bold text-gold-premium font-mono">
+                            {ev.actual_registered_count || ev.registration_count || 0}
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Archived Challengers / Registrations */}
+          <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h3 className="font-bebas text-xl text-white uppercase tracking-wide flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-gold-premium" /> Historical Registration Records
+              </h3>
+              <div className="relative">
+                <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search past challenger..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-black/60 border border-white/10 text-xs text-white pl-9 pr-3 py-2 rounded focus:outline-none focus:border-gold-premium w-64 uppercase tracking-wider font-barlow"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left font-barlow">
+                <thead className="bg-black/40 text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-white/10">
+                  <tr>
+                    <th className="px-4 py-3">Pass Code</th>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Email & Phone</th>
+                    <th className="px-4 py-3">Event</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {registrations.filter((c: any) => c.event_id?.status === 'archived' || c.event_id?.status === 'completed' || c.event_id?.id === '597a367a-26de-4390-a41d-ad400b0417cf' || c.event_id?.title?.includes('Palghar')).length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-gray-500 uppercase tracking-widest">
+                        No archived registrations found
+                      </td>
+                    </tr>
+                  ) : (
+                    registrations
+                      .filter((c: any) => c.event_id?.status === 'archived' || c.event_id?.status === 'completed' || c.event_id?.id === '597a367a-26de-4390-a41d-ad400b0417cf' || c.event_id?.title?.includes('Palghar'))
+                      .filter((c: any) => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          c.full_name?.toLowerCase().includes(q) ||
+                          c.email?.toLowerCase().includes(q) ||
+                          c.registration_code?.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((ch: any) => (
+                        <tr key={ch.id} className="hover:bg-white/[2%]">
+                          <td className="px-4 py-3 font-mono font-bold text-gold-premium text-xs">{ch.registration_code}</td>
+                          <td className="px-4 py-3 font-bold text-white uppercase">{ch.full_name}</td>
+                          <td className="px-4 py-3 text-xs text-gray-300">
+                            <div>{ch.email}</div>
+                            <div className="text-gray-500 font-mono">{ch.phone}</div>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-400">{ch.event_title || 'Past Event'}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold border ${
+                              ch.status === 'confirmed'
+                                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                                : 'bg-red-500/10 border-red-500/30 text-red-400'
+                            }`}>
+                              {ch.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

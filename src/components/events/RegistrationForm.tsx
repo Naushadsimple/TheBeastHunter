@@ -260,6 +260,17 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               throw new Error(verifyData.message || 'Payment verification failed');
             }
 
+            // 3. Dispatch pass confirmation email via Nodemailer API
+            try {
+              await fetch('/api/send-pass-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ registrationId: orderData.registrationId }),
+              });
+            } catch (mailErr) {
+              console.error('Failed to trigger pass email delivery:', mailErr);
+            }
+
             // Success redirect
             router.push(`/payment/success?registration_id=${orderData.registrationId}`);
           } catch (err: any) {

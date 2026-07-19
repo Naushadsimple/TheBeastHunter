@@ -350,33 +350,46 @@ export default async function EventDetailsPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Prize Pool */}
-              {event.prize_pool && (event.prize_pool.total || event.prize_pool.first) && (
-                <div className="space-y-4">
-                  <h3 className="font-bebas text-3xl text-white tracking-wide uppercase border-b border-gold-premium/20 pb-2">
-                    Prize Pool
+              {/* Prize Pool Breakdown */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gold-premium/20 pb-2">
+                  <h3 className="font-bebas text-3xl text-white tracking-wide uppercase">
+                    Prize Pool Breakdown
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="bg-dark-gray border border-gold-premium/25 p-6 rounded-lg text-center relative overflow-hidden">
-                      <Trophy className="w-12 h-12 text-gold-premium mx-auto mb-2 opacity-20 absolute -right-2 -bottom-2" />
-                      <span className="font-barlow text-xs font-bold uppercase text-gold-premium tracking-widest block mb-1">1st Place Champion</span>
-                      <span className="font-bebas text-3xl text-white tracking-wide">₹{event.prize_pool.first?.toLocaleString('en-IN')}</span>
-                    </div>
-                    {event.prize_pool.second && (
-                      <div className="bg-dark-gray/60 border border-white/5 p-6 rounded-lg text-center">
-                        <span className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest block mb-1">2nd Place</span>
-                        <span className="font-bebas text-2xl text-white tracking-wide">₹{event.prize_pool.second?.toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
-                    {event.prize_pool.third && (
-                      <div className="bg-dark-gray/60 border border-white/5 p-6 rounded-lg text-center">
-                        <span className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest block mb-1">3rd Place</span>
-                        <span className="font-bebas text-2xl text-white tracking-wide">₹{event.prize_pool.third?.toLocaleString('en-IN')}</span>
-                      </div>
-                    )}
+                  <span className="font-bebas text-2xl text-gold-premium">Total: ₹500,000+</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-gold-premium/20 to-black border border-gold-premium/40 p-5 rounded-xl text-center relative overflow-hidden">
+                    <Trophy className="w-10 h-10 text-gold-premium mx-auto mb-1 opacity-20 absolute -right-2 -bottom-2" />
+                    <span className="font-barlow text-xs font-bold uppercase text-gold-premium tracking-widest block mb-1">1st Place Champion</span>
+                    <span className="font-bebas text-3xl text-white tracking-wide">₹1,00,000</span>
+                  </div>
+                  <div className="bg-dark-gray/60 border border-white/10 p-5 rounded-xl text-center">
+                    <span className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest block mb-1">2nd Place</span>
+                    <span className="font-bebas text-2xl text-white tracking-wide">₹50,000</span>
+                  </div>
+                  <div className="bg-dark-gray/60 border border-white/10 p-5 rounded-xl text-center">
+                    <span className="font-barlow text-xs font-bold uppercase text-gray-400 tracking-widest block mb-1">3rd Place</span>
+                    <span className="font-bebas text-2xl text-white tracking-wide">₹25,000</span>
                   </div>
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+                  {[
+                    { rank: 'Top 5', prize: '₹10,000 / person' },
+                    { rank: 'Top 10', prize: '₹5,000 / person' },
+                    { rank: 'Top 25', prize: '₹3,000 / person' },
+                    { rank: 'Top 50', prize: '₹2,000 / person' },
+                    { rank: 'Top 100', prize: '₹1,000 / person' },
+                  ].map((tier, idx) => (
+                    <div key={idx} className="bg-black/50 border border-white/10 p-3 rounded-lg text-center">
+                      <span className="font-barlow text-[10px] font-bold uppercase text-gold-glow tracking-widest block">{tier.rank}</span>
+                      <span className="font-bebas text-lg text-white mt-0.5 block">{tier.prize}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {/* Event Schedule */}
               {event.schedule && event.schedule.length > 0 && (

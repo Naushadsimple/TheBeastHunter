@@ -88,7 +88,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
     event_date: '2026-11-15T06:00:00Z',
     distance_km: 10,
     difficulty: 'intermediate',
-    ticket_price: 999,
+    ticket_price: 1500,
     max_participants: 500,
     registration_count: 0,
   };

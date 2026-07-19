@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
 import UpcomingRaces, { DBEvent } from "@/components/sections/UpcomingRaces";
 import AboutUs from "@/components/sections/AboutUs";
+import PastWinners from "@/components/sections/PastWinners";
 import YoutubeVideosSection from "@/components/sections/YoutubeVideosSection";
 import SponsorsSection from "@/components/sections/SponsorsSection";
 import { createClient } from '@/lib/supabase/server';
@@ -63,6 +64,7 @@ export default async function Home() {
         <Hero />
         <SponsorsSection sponsors={sponsors} />
         <UpcomingRaces events={events} />
+        <PastWinners />
         <AboutUs />
         <YoutubeVideosSection />
       </main>
