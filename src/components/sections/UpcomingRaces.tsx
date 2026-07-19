@@ -1,9 +1,26 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { Calendar, MapPin, Route, Trophy, Users } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Calendar,
+  MapPin,
+  Route,
+  Trophy,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Dumbbell,
+  Bike,
+  Timer,
+  Zap,
+  Award,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react';
 
 export interface DBEvent {
   id: string;
@@ -16,194 +33,305 @@ export interface DBEvent {
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   ticket_price: number;
   max_participants: number;
-  registration_count?: number; // Added from registration counts join
+  registration_count?: number;
+  displayed_slot_count?: number;
 }
 
 interface UpcomingRacesProps {
   events: DBEvent[];
 }
 
+const AUDITION_SLIDES = [
+  {
+    id: 'running',
+    title: 'Running Audition',
+    tagline: '100 Contestants → Top 20 Finalists',
+    description: 'Test your endurance and speed on the track. Only top 20 runners secure a spot in the Top 100 Knockout.',
+    icon: Flame,
+    color: 'from-amber-500 to-red-600',
+    image: '/images/events/audition_options.jpg',
+  },
+  {
+    id: 'cycling',
+    title: 'Cycling Audition',
+    tagline: '100 Contestants → Top 20 Finalists',
+    description: 'Pedal through high-intensity resistance trials. High stamina athletes compete for 20 final slots.',
+    icon: Bike,
+    color: 'from-blue-500 to-cyan-600',
+    image: '/images/events/audition_options.jpg',
+  },
+  {
+    id: 'lifting',
+    title: 'Weight Lifting Audition',
+    tagline: '100 Contestants → Top 20 Finalists',
+    description: 'Raw power and bar precision. Prove your strength under heavy resistance load.',
+    icon: Dumbbell,
+    color: 'from-purple-500 to-pink-600',
+    image: '/images/events/audition_options.jpg',
+  },
+  {
+    id: 'dumbbell',
+    title: 'Dumbbell Holding Audition',
+    tagline: '100 Contestants → Top 20 Finalists',
+    description: 'Isometric grip and shoulder endurance trial. Hold the weight until your limits break.',
+    icon: Zap,
+    color: 'from-yellow-400 to-orange-500',
+    image: '/images/events/audition_options.jpg',
+  },
+  {
+    id: 'plank',
+    title: 'Plank Challenge Audition',
+    tagline: '100 Contestants → Top 20 Finalists',
+    description: 'Core toughness and mental resilience. Outlast 100 contestants to claim your finalist position.',
+    icon: Timer,
+    color: 'from-emerald-400 to-teal-600',
+    image: '/images/events/audition_options.jpg',
+  },
+];
+
 export default function UpcomingRaces({ events }: UpcomingRacesProps) {
-  // Beautiful fallback mock events in case database is empty
-  const mockEvents: DBEvent[] = [
-    {
-      id: 'd1111111-1111-4111-a111-111111111111',
-      title: 'Beast Mud Run 2026',
-      slug: 'beast-mud-run-2026',
-      short_description: 'India\'s largest obstacle mud run with 25+ military-grade obstacles, fire jumps, and giant slides.',
-      banner_url: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-10-15T06:00:00Z',
-      distance_km: 10,
-      difficulty: 'intermediate',
-      ticket_price: 1999,
-      max_participants: 2500,
-      registration_count: 1840,
-    },
-    {
-      id: 'd2222222-2222-4222-a222-222222222222',
-      title: 'Night Beast Half Marathon',
-      slug: 'night-beast-half-marathon',
-      short_description: 'An electric neon night half marathon through the heart of Delhi. Fully lit course with live music stations.',
-      banner_url: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-11-20T18:00:00Z',
-      distance_km: 21,
-      difficulty: 'advanced',
-      ticket_price: 2499,
-      max_participants: 1500,
-      registration_count: 920,
-    },
-    {
-      id: 'd3333333-3333-4333-a333-333333333333',
-      title: 'The Elite Alpha Challenge',
-      slug: 'elite-alpha-challenge',
-      short_description: 'A brutal 15KM endurance trial on mountain trails. Strictly for advanced endurance athletes.',
-      banner_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-12-05T05:30:00Z',
-      distance_km: 15,
-      difficulty: 'elite',
-      ticket_price: 3499,
-      max_participants: 500,
-      registration_count: 480,
-    },
-  ];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  const activeEvents = events && events.length > 0 ? events : mockEvents;
+  // Auto-play timer for carousel
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % AUDITION_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isAutoPlaying]);
 
-  const difficultyColors = {
-    beginner: 'border-green-500/30 text-green-400 bg-green-500/5',
-    intermediate: 'border-blue-500/30 text-blue-400 bg-blue-500/5',
-    advanced: 'border-gold-premium/30 text-gold-glow bg-gold-premium/5',
-    elite: 'border-red-500/30 text-red-400 bg-red-500/5',
+  const activeEvent = events && events.length > 0 ? events[0] : null;
+
+  const handleNext = () => {
+    setIsAutoPlaying(false);
+    setActiveIndex((prev) => (prev + 1) % AUDITION_SLIDES.length);
+  };
+
+  const handlePrev = () => {
+    setIsAutoPlaying(false);
+    setActiveIndex((prev) => (prev - 1 + AUDITION_SLIDES.length) % AUDITION_SLIDES.length);
   };
 
   return (
-    <section id="events-section" className="py-24 bg-deep-black border-t border-white/5 relative">
+    <section id="events-section" className="py-24 bg-deep-black border-t border-white/5 relative overflow-hidden">
+      {/* Dynamic Gold Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gold-premium/5 rounded-full blur-[140px] pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
-            <span className="font-barlow text-sm font-bold uppercase tracking-widest text-gold-premium block mb-3">
-              Upcoming Challenges
+            <span className="font-barlow text-sm font-bold uppercase tracking-widest text-gold-premium block mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" /> Official 2026 Challenge Event
             </span>
             <h2 className="font-bebas text-4xl sm:text-6xl text-white tracking-wider uppercase">
-              CHOOSE YOUR <span className="gold-gradient-text">BATTLE</span>
+              THE BEAST HUNTER <span className="gold-gradient-text">AUDITION 2026</span>
             </h2>
           </div>
-          <Link
-            href="/events"
-            className="font-barlow text-lg font-bold uppercase tracking-wider text-gold-premium hover:text-gold-glow mt-4 md:mt-0 inline-flex items-center space-x-1 transition-colors duration-300"
-          >
-            <span>View All Challenges</span>
-            <span>&rarr;</span>
-          </Link>
+          {activeEvent && (
+            <Link
+              href={`/events/${activeEvent.slug}`}
+              className="font-barlow text-lg font-bold uppercase tracking-wider text-gold-premium hover:text-gold-glow mt-4 md:mt-0 inline-flex items-center space-x-2 transition-colors duration-300"
+            >
+              <span>View Full Event Details</span>
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          )}
         </div>
 
-        {/* Races Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {activeEvents.map((race, idx) => {
-            const dateObj = new Date(race.event_date);
-            const formattedDate = dateObj.toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            });
-            const slotsCount = race.registration_count || 0;
-            const remainingSlots = Math.max(0, race.max_participants - slotsCount);
-            const filledPercent = Math.min(100, Math.round((slotsCount / race.max_participants) * 100));
+        {/* 3D Animated Carousel Showcase */}
+        <div className="mb-16">
+          <div className="relative bg-gradient-to-br from-dark-gray via-black to-dark-gray border border-white/10 rounded-2xl overflow-hidden p-6 sm:p-10 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Info Column */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gold-premium/10 border border-gold-premium/30 text-gold-premium text-xs font-barlow font-bold uppercase tracking-wider">
+                  <Trophy className="w-4 h-4" />
+                  <span>Choose Your Audition Strength</span>
+                </div>
 
-            return (
-              <motion.div
-                key={race.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="group bg-dark-gray border border-white/5 rounded-lg overflow-hidden flex flex-col justify-between hover:border-gold-premium/20 transition-all duration-300"
-              >
-                {/* Banner wrapper */}
-                <div className="relative h-56 w-full overflow-hidden">
-                  <Image
-                    src={race.banner_url}
-                    alt={race.title}
-                    fill
-                    sizes="(max-w-768px) 100vw, 33vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Distance badge */}
-                  <div className="absolute top-4 left-4 bg-black/75 backdrop-blur-sm border border-white/10 px-3 py-1 rounded flex items-center space-x-1">
-                    <Route className="w-4 h-4 text-gold-premium" />
-                    <span className="font-bebas text-lg text-white tracking-wide">
-                      {race.distance_km} KM
-                    </span>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeIndex}
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30 }}
+                    transition={{ duration: 0.4 }}
+                    className="space-y-4"
+                  >
+                    <h3 className="font-bebas text-3xl sm:text-5xl text-white uppercase tracking-wide">
+                      {AUDITION_SLIDES[activeIndex].title}
+                    </h3>
+                    <p className="font-barlow text-gold-glow text-lg uppercase font-bold tracking-wider">
+                      {AUDITION_SLIDES[activeIndex].tagline}
+                    </p>
+                    <p className="font-inter text-gray-400 text-sm leading-relaxed max-w-lg">
+                      {AUDITION_SLIDES[activeIndex].description}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Audition Navigation Pills */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {AUDITION_SLIDES.map((slide, idx) => {
+                    const IconComp = slide.icon;
+                    const isActive = idx === activeIndex;
+                    return (
+                      <button
+                        key={slide.id}
+                        onClick={() => {
+                          setIsAutoPlaying(false);
+                          setActiveIndex(idx);
+                        }}
+                        className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg border font-barlow text-xs font-bold uppercase transition-all duration-300 ${
+                          isActive
+                            ? 'gold-gradient-bg text-black border-gold-premium shadow-[0_0_15px_rgba(212,175,55,0.4)] scale-105'
+                            : 'bg-black/50 text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
+                        }`}
+                      >
+                        <IconComp className="w-4 h-4" />
+                        <span>{slide.title.replace(' Audition', '')}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Register CTA button */}
+                <div className="pt-4 flex items-center space-x-4">
+                  <Link
+                    href={activeEvent ? `/events/${activeEvent.slug}/register` : '/events'}
+                    className="gold-gradient-bg text-black font-barlow font-black text-sm uppercase tracking-widest px-8 py-4 rounded-lg hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_25px_rgba(212,175,55,0.4)] inline-flex items-center space-x-2"
+                  >
+                    <span>Register For Audition (₹{activeEvent?.ticket_price || 999})</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Image Showcase with 3D Hover Animation */}
+              <div className="lg:col-span-6 relative flex items-center justify-center">
+                <div className="relative w-full h-[320px] sm:h-[400px] rounded-xl overflow-hidden border border-gold-premium/30 shadow-[0_0_40px_rgba(0,0,0,0.9)] group">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeIndex}
+                      initial={{ opacity: 0, scale: 0.95, rotateY: 10 }}
+                      animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                      exit={{ opacity: 0, scale: 1.05, rotateY: -10 }}
+                      transition={{ duration: 0.5 }}
+                      className="absolute inset-0"
+                    >
+                      <Image
+                        src={AUDITION_SLIDES[activeIndex].image}
+                        alt={AUDITION_SLIDES[activeIndex].title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        priority
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Carousel Controls Overlay */}
+                  <div className="absolute bottom-4 right-4 flex items-center space-x-2 z-20">
+                    <button
+                      onClick={handlePrev}
+                      className="p-3 rounded-full bg-black/70 border border-white/20 text-white hover:text-gold-premium hover:border-gold-premium transition-all active:scale-90"
+                      aria-label="Previous slide"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      className="p-3 rounded-full bg-black/70 border border-white/20 text-white hover:text-gold-premium hover:border-gold-premium transition-all active:scale-90"
+                      aria-label="Next slide"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                  {/* Difficulty Badge */}
-                  <div className={`absolute top-4 right-4 border px-3 py-1 rounded uppercase font-barlow text-xs font-bold tracking-wider ${difficultyColors[race.difficulty]}`}>
-                    {race.difficulty}
+        {/* Active Published Event Card Showcase */}
+        {activeEvent && (
+          <div className="max-w-4xl mx-auto">
+            <h3 className="font-bebas text-2xl text-white uppercase tracking-wider mb-6 text-center">
+              Featured Official Event Details
+            </h3>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="group bg-gradient-to-b from-dark-gray to-black border border-gold-premium/30 rounded-2xl overflow-hidden hover:border-gold-premium transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-12">
+                <div className="md:col-span-5 relative h-64 md:h-full min-h-[260px] overflow-hidden">
+                  <Image
+                    src={activeEvent.banner_url || '/images/events/audition_activities.jpg'}
+                    alt={activeEvent.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm border border-gold-premium/40 px-3 py-1 rounded text-gold-premium font-bebas text-lg">
+                    Palghar / Mumbai
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 flex-grow flex flex-col justify-between">
+                <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
                   <div>
-                    <h3 className="font-barlow text-2xl font-extrabold uppercase text-white tracking-wide group-hover:text-gold-premium transition-colors duration-300 mb-3">
-                      {race.title}
-                    </h3>
-                    <p className="font-inter text-gray-400 text-sm leading-relaxed mb-6 line-clamp-2">
-                      {race.short_description}
+                    <span className="text-xs uppercase font-barlow font-bold tracking-widest text-gold-premium block mb-2">
+                      Audition & Obstacle Knockout
+                    </span>
+                    <h4 className="font-bebas text-3xl text-white uppercase tracking-wide group-hover:text-gold-premium transition-colors">
+                      {activeEvent.title}
+                    </h4>
+                    <p className="font-inter text-gray-400 text-sm mt-3 leading-relaxed">
+                      {activeEvent.short_description}
                     </p>
+                  </div>
 
-                    {/* Stats Icons */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="flex items-center space-x-2 text-gray-300">
-                        <Calendar className="w-4 h-4 text-gold-premium" />
-                        <span className="font-barlow text-sm uppercase tracking-wide">{formattedDate}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-gray-300">
-                        <MapPin className="w-4 h-4 text-gold-premium" />
-                        <span className="font-barlow text-sm uppercase tracking-wide truncate">India</span>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4 border-y border-white/10 py-4 font-barlow text-xs uppercase tracking-wider text-gray-300">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-gold-premium" />
+                      <span>15 Nov 2026</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-gold-premium" />
+                      <span>Palghar Sports Complex</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-gold-premium" />
+                      <span>500 Max Participants</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Trophy className="w-4 h-4 text-gold-premium" />
+                      <span>₹500,000 Prize Pool</span>
                     </div>
                   </div>
 
-                  {/* Slots Tracker */}
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-400">
-                      <span className="flex items-center space-x-1">
-                        <Users className="w-3.5 h-3.5 text-gold-premium" />
-                        <span>{remainingSlots} Slots Left</span>
-                      </span>
-                      <span>{filledPercent}% Filled</span>
-                    </div>
-                    {/* Progress Bar */}
-                    <div className="w-full h-1.5 bg-black rounded-full overflow-hidden border border-white/5">
-                      <div
-                        className="h-full gold-gradient-bg transition-all duration-500"
-                        style={{ width: `${filledPercent}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pricing and Link */}
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-auto">
+                  <div className="flex items-center justify-between pt-2">
                     <div>
-                      <span className="text-xs uppercase tracking-widest text-gray-500 font-bold block">Entry Fee</span>
-                      <span className="font-bebas text-2xl text-white tracking-wide">
-                        ₹{race.ticket_price}
-                      </span>
+                      <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold block">Audition Fee</span>
+                      <span className="font-bebas text-3xl text-gold-premium">₹{activeEvent.ticket_price}</span>
                     </div>
                     <Link
-                      href={`/events/${race.slug}`}
-                      className="gold-gradient-bg text-black font-barlow font-black text-sm uppercase tracking-wider px-5 py-2.5 rounded hover:scale-105 active:scale-95 transition-all duration-300 hover:shadow-[0_0_12px_rgba(245,208,96,0.4)]"
+                      href={`/events/${activeEvent.slug}/register`}
+                      className="gold-gradient-bg text-black font-barlow font-black text-sm uppercase tracking-widest px-6 py-3 rounded-lg hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(212,175,55,0.4)]"
                     >
-                      View Details
+                      Register Now
                     </Link>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </section>
   );

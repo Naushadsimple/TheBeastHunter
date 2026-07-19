@@ -3,7 +3,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import UpcomingRaces, { DBEvent } from "@/components/sections/UpcomingRaces";
 import { createClient } from "@/lib/supabase/server";
-import { Route, Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface PageProps {
   searchParams: Promise<{
@@ -44,7 +44,6 @@ export default async function EventsPage({ searchParams }: PageProps) {
         status,
         displayed_slot_count
       `)
-      .eq('status', 'published')
       .order('event_date', { ascending: true });
 
     // Apply difficulty filter
@@ -63,10 +62,9 @@ export default async function EventsPage({ searchParams }: PageProps) {
       events = dbEvents.map((event) => ({
         ...event,
         registration_count: event.displayed_slot_count || 0,
-        distance_km: Number(event.distance_km), // Ensure float
+        distance_km: Number(event.distance_km),
       })) as DBEvent[];
 
-      // Apply distance filter programmatically if specified (easier than complex SQL filters on client)
       if (distanceQuery && distanceQuery !== 'all') {
         if (distanceQuery === 'short') {
           events = events.filter(e => e.distance_km <= 5);
@@ -81,63 +79,21 @@ export default async function EventsPage({ searchParams }: PageProps) {
     console.error('Error fetching events list:', err);
   }
 
-  // Beautiful fallback mock events if DB is empty
-  const mockEvents: DBEvent[] = [
-    {
-      id: 'mock-1',
-      title: 'Beast Mud Run 2026',
-      slug: 'beast-mud-run-2026',
-      short_description: 'India\'s largest obstacle mud run with 25+ military-grade obstacles, fire jumps, and giant slides.',
-      banner_url: 'https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-10-15T06:00:00Z',
-      distance_km: 10,
-      difficulty: 'intermediate',
-      ticket_price: 1999,
-      max_participants: 2500,
-      registration_count: 1840,
-    },
-    {
-      id: 'mock-2',
-      title: 'Night Beast Half Marathon',
-      slug: 'night-beast-half-marathon',
-      short_description: 'An electric neon night half marathon through the heart of Delhi. Fully lit course with live music stations.',
-      banner_url: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-11-20T18:00:00Z',
-      distance_km: 21,
-      difficulty: 'advanced',
-      ticket_price: 2499,
-      max_participants: 1500,
-      registration_count: 920,
-    },
-    {
-      id: 'mock-3',
-      title: 'The Elite Alpha Challenge',
-      slug: 'elite-alpha-challenge',
-      short_description: 'A brutal 15KM endurance trial on mountain trails. Strictly for advanced endurance athletes.',
-      banner_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&q=80&w=800',
-      event_date: '2026-12-05T05:30:00Z',
-      distance_km: 15,
-      difficulty: 'elite',
-      ticket_price: 3499,
-      max_participants: 500,
-      registration_count: 480,
-    },
-  ];
+  const defaultAuditionEvent: DBEvent = {
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    title: 'The Beast Hunter Audition & Ultimate Challenge 2026',
+    slug: 'beast-hunter-audition-2026',
+    short_description: 'Choose your audition strength: Running, Cycling, Weight Lifting, Dumbbell Holding, or Plank. Top 100 move to the brutal Final Obstacle Knockout!',
+    banner_url: '/images/events/audition_options.jpg',
+    event_date: '2026-11-15T06:00:00Z',
+    distance_km: 10,
+    difficulty: 'intermediate',
+    ticket_price: 999,
+    max_participants: 500,
+    registration_count: 0,
+  };
 
-  // If no DB events exist, use mockEvents, else filter mockEvents if filtering is requested
-  const displayEvents = events.length > 0 ? events : (
-    isFiltered ? mockEvents.filter(e => {
-      let matches = true;
-      if (searchQuery) matches = matches && e.title.toLowerCase().includes(searchQuery.toLowerCase());
-      if (difficultyQuery && difficultyQuery !== 'all') matches = matches && e.difficulty === difficultyQuery;
-      if (distanceQuery && distanceQuery !== 'all') {
-        if (distanceQuery === 'short') matches = matches && e.distance_km <= 5;
-        if (distanceQuery === 'medium') matches = matches && (e.distance_km > 5 && e.distance_km <= 15);
-        if (distanceQuery === 'long') matches = matches && e.distance_km > 15;
-      }
-      return matches;
-    }) : mockEvents
-  );
+  const displayEvents = events.length > 0 ? events : [defaultAuditionEvent];
 
   return (
     <>
@@ -148,13 +104,13 @@ export default async function EventsPage({ searchParams }: PageProps) {
           <div className="border border-gold-premium/15 bg-dark-gray/30 p-8 sm:p-12 rounded-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-gold-premium/5 rounded-full blur-[100px] pointer-events-none" />
             <span className="font-barlow text-sm font-bold uppercase tracking-widest text-gold-premium block mb-2">
-              Hunter Challenges
+              Official Hunter Auditions
             </span>
             <h1 className="font-bebas text-4xl sm:text-6xl text-white tracking-wide uppercase">
-              RACES & <span className="gold-gradient-text">OBSTACLE EVENTS</span>
+              RACES & <span className="gold-gradient-text">AUDITION CHALLENGES</span>
             </h1>
             <p className="font-barlow text-base sm:text-lg text-gray-400 mt-2 max-w-xl uppercase tracking-wider">
-              Find your next test. Register, train, and dominate the track.
+              Select your audition discipline. Register, train, and dominate the arena.
             </p>
           </div>
         </div>
@@ -176,7 +132,6 @@ export default async function EventsPage({ searchParams }: PageProps) {
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-              {/* Difficulty */}
               <div className="relative flex-1 sm:w-48">
                 <select
                   name="difficulty"
@@ -191,7 +146,6 @@ export default async function EventsPage({ searchParams }: PageProps) {
                 </select>
               </div>
 
-              {/* Distance */}
               <div className="relative flex-1 sm:w-48">
                 <select
                   name="distance"
@@ -205,7 +159,6 @@ export default async function EventsPage({ searchParams }: PageProps) {
                 </select>
               </div>
 
-              {/* Filter Submit Button */}
               <button
                 type="submit"
                 className="gold-gradient-bg text-black font-barlow font-bold uppercase text-sm tracking-wider px-6 py-3 rounded hover:scale-105 active:scale-95 transition-all duration-300 w-full sm:w-auto"
