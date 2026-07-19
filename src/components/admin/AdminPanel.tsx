@@ -28,6 +28,7 @@ import {
   Mail,
   Sliders,
   Archive,
+  Download,
 } from 'lucide-react';
 
 type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail' | 'slots' | 'archive';
@@ -373,6 +374,53 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       r.event_id?.id === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' ||
       (r.event_id?.status !== 'archived' && r.event_id?.status !== 'completed' && !r.event_id?.title?.includes('Palghar'))
   );
+
+  const handleExportCsv = () => {
+    if (activeRegs.length === 0) {
+      setMessage({ type: 'error', text: 'No active challengers data available to export' });
+      return;
+    }
+
+    const headers = [
+      'Registration Code',
+      'Full Name',
+      'Email',
+      'Phone',
+      'Event Title',
+      'Audition Option',
+      'T-Shirt Size',
+      'Status',
+      'Payment Status',
+      'Transaction ID',
+      'Registered Date',
+    ];
+
+    const rows = activeRegs.map((r) => [
+      `"${r.registration_code || ''}"`,
+      `"${(r.full_name || '').replace(/"/g, '""')}"`,
+      `"${(r.email || '').replace(/"/g, '""')}"`,
+      `"${(r.phone || '').replace(/"/g, '""')}"`,
+      `"${(r.event_id?.title || '').replace(/"/g, '""')}"`,
+      `"${(r.audition_option || 'Running').replace(/"/g, '""')}"`,
+      `"${(r.tshirt_size || 'M').replace(/"/g, '""')}"`,
+      `"${r.status || ''}"`,
+      `"${r.payment_status || ''}"`,
+      `"${(r.transaction_id || '').replace(/"/g, '""')}"`,
+      `"${r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : ''}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Beast_Hunter_Challengers_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setMessage({ type: 'success', text: `Exported ${activeRegs.length} challengers to CSV` });
+  };
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -756,23 +804,33 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
         <div className="space-y-4 animate-in fade-in">
           <div className="bg-gold-premium/10 border border-gold-premium/30 rounded-xl p-4 sm:p-6 text-center">
             <p className="font-barlow text-xs uppercase tracking-widest text-gold-premium mb-1">
-              Total registered challengers
+              Active event challengers
             </p>
-            <p className="font-bebas text-5xl sm:text-6xl text-white">{stats.totalChallengers}</p>
+            <p className="font-bebas text-5xl sm:text-6xl text-white">{activeRegs.length}</p>
             <p className="text-sm text-gray-400 mt-2">
-              {stats.confirmedChallengers} confirmed · {stats.pendingChallengers} pending
+              {activeRegs.filter((r) => r.status === 'confirmed').length} confirmed · {activeRegs.filter((r) => r.status === 'pending').length} pending
             </p>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <input
-              type="search"
-              placeholder="Search name, email, phone, bib code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-gold-premium"
-            />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="search"
+                placeholder="Search name, email, phone, bib code..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-gold-premium"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="gold-gradient-bg text-black font-barlow text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center space-x-2 shrink-0 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export CSV</span>
+            </button>
           </div>
 
           {/* Desktop table */}
