@@ -295,6 +295,14 @@ function SuccessContent() {
             </div>
             
             <div>
+              <span className="font-barlow text-[10px] font-bold text-gold-premium uppercase tracking-widest block">Selected Audition (100 Slots)</span>
+              <span className="font-barlow text-sm font-black uppercase text-gold-glow tracking-wide flex items-center space-x-1.5 mt-0.5">
+                <Flame className="w-3.5 h-3.5 text-gold-premium shrink-0" />
+                <span>{registration?.audition_option || 'Running Audition'}</span>
+              </span>
+            </div>
+
+            <div>
               <span className="font-barlow text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Event Date</span>
               <span className="font-barlow text-sm font-black uppercase text-white tracking-wide flex items-center space-x-1.5 mt-0.5">
                 <Calendar className="w-3.5 h-3.5 text-gold-premium" />

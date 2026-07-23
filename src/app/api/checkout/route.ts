@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
         id_proof_url: registrationData.idProofUrl || null,
         transaction_id: transactionId.trim(),
         payment_proof_url: paymentProofUrl.trim(),
+        audition_option: registrationData.auditionOption || 'Running',
         waiver_accepted: true,
         status: 'pending',
         payment_status: 'pending',

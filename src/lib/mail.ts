@@ -210,6 +210,10 @@ export async function sendPendingEmail(
         <td class="value">${event.title}</td>
       </tr>
       <tr>
+        <td class="label">Audition Activity</td>
+        <td class="value" style="color: #D4AF37; font-weight: bold;">${registration.audition_option || 'Running Audition'}</td>
+      </tr>
+      <tr>
         <td class="label">Ticket Code</td>
         <td class="value">${registration.registration_code}</td>
       </tr>
@@ -256,6 +260,10 @@ export async function sendApprovalEmail(
       <tr>
         <td class="label">Pass Code</td>
         <td class="value" style="color: #D4AF37; font-weight: 800;">${registration.registration_code}</td>
+      </tr>
+      <tr>
+        <td class="label">Audition Activity</td>
+        <td class="value" style="color: #F5D060; font-weight: 800;">${registration.audition_option || 'Running Audition'} (100 Slots)</td>
       </tr>
       <tr>
         <td class="label">Event Date</td>

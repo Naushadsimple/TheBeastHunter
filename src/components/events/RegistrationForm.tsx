@@ -38,7 +38,7 @@ const AUDITION_OPTIONS = [
   {
     id: 'Running',
     name: 'Running Audition',
-    description: '100 Contestants → Top 20 Finalists',
+    description: '100 Slots • Top 20 Move to Final',
     icon: Flame,
     bg: 'from-orange-500/20 to-red-500/10',
     border: 'border-orange-500/40',
@@ -47,25 +47,25 @@ const AUDITION_OPTIONS = [
   {
     id: 'Cycling',
     name: 'Cycling Audition',
-    description: '100 Contestants → Top 20 Finalists',
+    description: '100 Slots • Top 20 Move to Final',
     icon: Bike,
     bg: 'from-blue-500/20 to-cyan-500/10',
     border: 'border-blue-500/40',
     badge: 'Stamina',
   },
   {
-    id: 'Weight Lifting',
-    name: 'Weight Lifting Audition',
-    description: '100 Contestants → Top 20 Finalists',
+    id: 'Weight Holding',
+    name: 'Weight Holding Audition',
+    description: '100 Slots • Top 20 Move to Final',
     icon: Dumbbell,
     bg: 'from-purple-500/20 to-pink-500/10',
     border: 'border-purple-500/40',
-    badge: 'Raw Power',
+    badge: 'Raw Power & Hold',
   },
   {
     id: 'Dumbbell Holding',
     name: 'Dumbbell Holding Audition',
-    description: '100 Contestants → Top 20 Finalists',
+    description: '100 Slots • Top 20 Move to Final',
     icon: Zap,
     bg: 'from-amber-500/20 to-yellow-500/10',
     border: 'border-amber-500/40',
@@ -74,7 +74,7 @@ const AUDITION_OPTIONS = [
   {
     id: 'Plank',
     name: 'Plank Challenge Audition',
-    description: '100 Contestants → Top 20 Finalists',
+    description: '100 Slots • Top 20 Move to Final',
     icon: Timer,
     bg: 'from-emerald-500/20 to-teal-500/10',
     border: 'border-emerald-500/40',
@@ -543,29 +543,61 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               {AUDITION_OPTIONS.map((opt) => {
                 const IconComp = opt.icon;
                 const isSelected = formData.auditionOption === opt.id;
+                const evSlots = (event as any)?.audition_slots || {};
+                const filled = evSlots[opt.id]?.filled ?? 0;
+                const capacity = 100;
+                const remaining = Math.max(0, capacity - filled);
+                const isSoldOut = remaining <= 0;
+
                 return (
                   <div
                     key={opt.id}
-                    onClick={() => setFormData((p) => ({ ...p, auditionOption: opt.id }))}
+                    onClick={() => {
+                      if (!isSoldOut) {
+                        setFormData((p) => ({ ...p, auditionOption: opt.id }));
+                      }
+                    }}
                     className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 bg-gradient-to-br ${
-                      isSelected
-                        ? `border-gold-premium bg-gold-premium/10 shadow-[0_0_20px_rgba(212,175,55,0.3)] scale-[1.02]`
+                      isSoldOut
+                        ? 'opacity-50 border-red-500/30 bg-red-500/5 cursor-not-allowed'
+                        : isSelected
+                        ? 'border-gold-premium bg-gold-premium/10 shadow-[0_0_20px_rgba(212,175,55,0.3)] scale-[1.02]'
                         : 'border-white/10 bg-black/40 hover:border-gold-premium/40 hover:scale-[1.01]'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <div className={`p-2.5 rounded-lg bg-black/40 border border-white/10`}>
+                      <div className="p-2.5 rounded-lg bg-black/40 border border-white/10">
                         <IconComp className={`w-6 h-6 ${isSelected ? 'text-gold-premium' : 'text-gray-300'}`} />
                       </div>
-                      <span className="text-[10px] font-barlow font-bold uppercase px-2 py-0.5 rounded bg-white/10 text-gold-glow">
-                        {opt.badge}
+                      <span className={`text-[10px] font-barlow font-bold uppercase px-2 py-0.5 rounded border ${
+                        isSoldOut
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                          : 'bg-gold-premium/10 text-gold-premium border-gold-premium/30'
+                      }`}>
+                        {isSoldOut ? 'SOLD OUT' : `${remaining} Spots Left`}
                       </span>
                     </div>
+
                     <h4 className="font-bebas text-lg text-white uppercase tracking-wide">{opt.name}</h4>
                     <p className="text-xs text-gray-400 font-barlow mt-1 uppercase tracking-wider">{opt.description}</p>
+                    
+                    {/* Filled vs Remaining slot progress bar */}
+                    <div className="mt-3 pt-2 border-t border-white/5 space-y-1.5 font-barlow">
+                      <div className="flex justify-between items-center text-[11px] uppercase font-bold">
+                        <span className="text-gray-400">Filled: <span className="text-white">{filled} / {capacity}</span></span>
+                        <span className="text-gold-premium">{remaining} Remaining</span>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-gold-premium to-amber-400 h-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+
                     {isSelected && (
                       <div className="mt-3 flex items-center text-xs font-barlow font-bold text-gold-premium uppercase tracking-widest">
-                        <CheckCircle2 className="w-4 h-4 mr-1.5" /> Selected
+                        <CheckCircle2 className="w-4 h-4 mr-1.5" /> Selected Activity
                       </div>
                     )}
                   </div>

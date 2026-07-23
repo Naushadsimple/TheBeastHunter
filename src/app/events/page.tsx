@@ -83,7 +83,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     title: 'The Beast Hunter Audition & Ultimate Challenge 2026',
     slug: 'beast-hunter-audition-2026',
-    short_description: 'Choose your audition strength: Running, Cycling, Weight Lifting, Dumbbell Holding, or Plank. Top 100 move to the brutal Final Obstacle Knockout!',
+    short_description: 'Choose your audition strength: Running, Cycling, Weight Holding, Dumbbell Holding, or Plank. Top 100 move to the brutal Final Obstacle Knockout!',
     banner_url: '/images/events/audition_options.jpg',
     event_date: '2026-11-15T06:00:00Z',
     distance_km: 10,

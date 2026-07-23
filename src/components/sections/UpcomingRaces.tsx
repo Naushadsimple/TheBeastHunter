@@ -60,7 +60,7 @@ const AUDITION_SLIDES = [
   },
   {
     id: 'lifting',
-    title: 'Weight Lifting Audition',
+    title: 'Weight Holding Audition',
     tagline: '100 Contestants → Top 20 Finalists',
     description: 'Explosive barbell lifts and max rep trials. Demonstrate maximum muscular strength under heavy load.',
     icon: Dumbbell,

@@ -45,22 +45,28 @@ interface DashboardStats {
 
 const PREBUILT_TEMPLATES = [
   {
+    id: 'ticket_send',
+    name: 'Ticket & Digital Pass Dispatch (Pre-built)',
+    subject: 'Official Ticket & Entry Pass: {event}',
+    body: 'Hello {name},\n\nCongratulations! Your official digital entry pass for {event} has been generated.\n\nTicket & Pass Details:\n- Challenger Name: {name}\n- Official Bib Code: {code}\n- Selected Audition Activity: {audition}\n- Registration Status: {status}\n- Ticket Price: {price}\n\nAccess & Download Your Virtual Pass Here:\n{ticket_url}\n\nPlease bring a printed copy or show this digital pass on your mobile at the venue entrance.\n\nGet ready to push your limits and unleash the beast!\n\nBest regards,\nThe Beast Hunter Challenge Team',
+  },
+  {
     id: 'registration_confirm',
     name: 'Registration Confirmation (Pre-built)',
     subject: 'Registration Confirmed: {event}',
-    body: 'Hello {name},\n\nYour registration for {event} has been successfully confirmed!\n\nYour official Bib Code is: {code}\nRegistration Status: {status}\n\nWe look forward to seeing you at the starting line. Stay strong and keep training!\n\nBest regards,\nThe Beast Hunter Challenge Team',
+    body: 'Hello {name},\n\nYour registration for {event} has been successfully confirmed!\n\nYour official Bib Code is: {code}\nSelected Audition: {audition}\nRegistration Status: {status}\n\nWe look forward to seeing you at the starting line. Stay strong and keep training!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
   {
     id: 'payment_receipt',
     name: 'Payment Receipt (Pre-built)',
     subject: 'Receipt for your payment: {event}',
-    body: 'Hello {name},\n\nWe have successfully received your payment of {price} for {event}.\n\nRegistration Status: {status}\nBib Code: {code}\n\nYour ticket has been officially generated. Get ready to unleash the beast!\n\nBest regards,\nThe Beast Hunter Challenge Team',
+    body: 'Hello {name},\n\nWe have successfully received your payment of {price} for {event}.\n\nRegistration Status: {status}\nBib Code: {code}\nAudition Option: {audition}\n\nYour ticket has been officially generated. Get ready to unleash the beast!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
   {
     id: 'event_reminder',
     name: 'Event Day Reminder (Pre-built)',
     subject: 'Important Reminder: {event} is coming up!',
-    body: 'Hello {name},\n\nThis is a friendly reminder that {event} is just around the corner!\n\nDetails:\n- Event: {event}\n- Bib Code: {code}\n- Ticket Price: {price}\n- Status: {status}\n\nPlease ensure you arrive at the venue early and carry your ID proof.\n\nKeep pushing, keep hunting!\n\nBest regards,\nThe Beast Hunter Challenge Team',
+    body: 'Hello {name},\n\nThis is a friendly reminder that {event} is just around the corner!\n\nDetails:\n- Event: {event}\n- Bib Code: {code}\n- Audition Option: {audition}\n- Ticket Price: {price}\n- Status: {status}\n\nPlease ensure you arrive at the venue early and carry your ID proof.\n\nKeep pushing, keep hunting!\n\nBest regards,\nThe Beast Hunter Challenge Team',
   },
 ];
 
@@ -145,6 +151,62 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   const [selectedEventForSlots, setSelectedEventForSlots] = useState<any | null>(null);
   const [overrideSlotsValue, setOverrideSlotsValue] = useState<string>('');
   const [updatingSlots, setUpdatingSlots] = useState(false);
+
+  const [showAuditionSlotsModal, setShowAuditionSlotsModal] = useState(false);
+  const [selectedEventForAuditionSlots, setSelectedEventForAuditionSlots] = useState<any | null>(null);
+  const [auditionSlotsForm, setAuditionSlotsForm] = useState({
+    Running: 0,
+    Cycling: 0,
+    'Weight Holding': 0,
+    'Dumbbell Holding': 0,
+    Plank: 0,
+  });
+
+  const handleOpenAuditionSlotsModal = (eventObj: any) => {
+    setSelectedEventForAuditionSlots(eventObj);
+    const existing = eventObj.audition_slots || {};
+    setAuditionSlotsForm({
+      Running: existing['Running']?.filled ?? 0,
+      Cycling: existing['Cycling']?.filled ?? 0,
+      'Weight Holding': existing['Weight Holding']?.filled ?? 0,
+      'Dumbbell Holding': existing['Dumbbell Holding']?.filled ?? 0,
+      Plank: existing['Plank']?.filled ?? 0,
+    });
+    setShowAuditionSlotsModal(true);
+  };
+
+  const handleUpdateAuditionSlots = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEventForAuditionSlots) return;
+
+    const newSlotsObj = {
+      Running: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Running) || 0) },
+      Cycling: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Cycling) || 0) },
+      'Weight Holding': { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm['Weight Holding']) || 0) },
+      'Dumbbell Holding': { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm['Dumbbell Holding']) || 0) },
+      Plank: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Plank) || 0) },
+    };
+
+    setUpdatingSlots(true);
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ audition_slots: newSlotsObj })
+        .eq('id', selectedEventForAuditionSlots.id);
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: `Audition activity slot counts updated successfully!` });
+      setShowAuditionSlotsModal(false);
+      setSelectedEventForAuditionSlots(null);
+      await loadDashboard();
+    } catch (err: any) {
+      console.error('Error updating audition slots:', err);
+      setMessage({ type: 'error', text: err.message || 'Failed to update audition slots' });
+    } finally {
+      setUpdatingSlots(false);
+    }
+  };
 
   const handleUpdateSlots = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -863,8 +925,9 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                         <div className="font-medium text-white">{r.full_name}</div>
                         <div className="text-xs text-gray-500">{r.email} · {r.phone}</div>
                       </td>
-                      <td className="px-4 py-3 text-gold-premium text-xs uppercase font-semibold">
-                        {r.event_id?.title || '—'}
+                      <td className="px-4 py-3 text-xs uppercase font-semibold">
+                        <div className="text-gold-premium">{r.event_id?.title || '—'}</div>
+                        <div className="text-[11px] text-amber-400 font-mono mt-0.5">🎯 {r.audition_option || 'Running'}</div>
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-gray-400">
                         {r.transaction_id || '—'}
@@ -922,7 +985,9 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   <StatusBadge status={r.status} />
                 </div>
                 <p className="text-xs text-gray-400">{r.email} · +91 {r.phone}</p>
-                <p className="text-xs text-gold-premium uppercase font-semibold">{r.event_id?.title}</p>
+                <p className="text-xs text-gold-premium uppercase font-semibold">
+                  {r.event_id?.title} • <span className="text-amber-400 font-mono">🎯 {r.audition_option || 'Running'}</span>
+                </p>
                 {r.transaction_id && (
                   <p className="text-xs text-gray-300">
                     <span className="text-gray-500">UTR:</span> <span className="font-mono">{r.transaction_id}</span>
@@ -1378,50 +1443,62 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
               </table>
             </div>
 
-            {/* Mobile list view */}
-            <div className="sm:hidden divide-y divide-white/5">
-              {events.length === 0 ? (
-                <div className="p-6 text-center text-gray-500 uppercase tracking-widest font-barlow text-sm">
-                  No events found
+            {/* Audition Activity Slots Breakdown (100 Capacity Each) */}
+            <div className="border-t border-white/10 p-6 bg-black/40 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-bebas text-xl text-white uppercase tracking-wide flex items-center gap-2">
+                    <Sliders className="w-5 h-5 text-gold-premium" />
+                    Audition Activity Slots Overrides (100 Slots Each)
+                  </h3>
+                  <p className="text-xs text-gray-400 font-barlow uppercase tracking-wider mt-0.5">
+                    Manage filled & remaining slot counts for all 5 audition disciplines (Running, Cycling, Weight Holding, Dumbbell Holding, Plank)
+                  </p>
                 </div>
-              ) : (
-                events.map((event) => (
-                  <div key={event.id} className="p-4 space-y-3 font-barlow">
-                    <div>
-                      <div className="font-bold text-white uppercase tracking-wide text-sm">{event.title}</div>
-                      <div className="text-[11px] text-gray-500 font-mono mt-0.5">{event.slug}</div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 bg-black/20 p-2.5 rounded-lg text-center text-xs">
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Actual</span>
-                        <span className="text-white text-sm font-semibold">{event.actual_registered_count || 0}</span>
+                {events.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAuditionSlotsModal(events[0])}
+                    className="gold-gradient-bg text-black text-xs font-black uppercase px-4 py-2.5 rounded hover:scale-105 active:scale-95 transition-all font-barlow shrink-0 flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Audition Activity Slots</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Audition Activity Slots Display Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 font-barlow">
+                {[
+                  { name: 'Running', icon: '🏃' },
+                  { name: 'Cycling', icon: '🚴' },
+                  { name: 'Weight Holding', icon: '🏋️' },
+                  { name: 'Dumbbell Holding', icon: '💪' },
+                  { name: 'Plank', icon: '⏱️' },
+                ].map((act) => {
+                  const evSlots = events[0]?.audition_slots || {};
+                  const filled = evSlots[act.name]?.filled ?? 0;
+                  const capacity = 100;
+                  const remaining = Math.max(0, capacity - filled);
+                  return (
+                    <div key={act.name} className="bg-dark-gray/60 border border-white/10 p-3.5 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white uppercase">{act.icon} {act.name}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gold-premium/10 text-gold-premium uppercase border border-gold-premium/30">
+                          {remaining} Left
+                        </span>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Displayed</span>
-                        <span className="text-gold-premium text-sm font-semibold">{event.displayed_slot_count || 0}</span>
+                      <div className="flex justify-between items-baseline text-xs text-gray-400">
+                        <span>Filled: <strong className="text-white">{filled}</strong> / {capacity}</span>
+                        <span className="text-gold-glow font-mono font-bold">{Math.round((filled / capacity) * 100)}%</span>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase tracking-wider font-bold mb-0.5">Capacity</span>
-                        <span className="text-gray-400 text-sm font-semibold">{event.max_participants || '∞'}</span>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-gold-premium h-full transition-all duration-500" style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }} />
                       </div>
                     </div>
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedEventForSlots(event);
-                          setOverrideSlotsValue(String(event.displayed_slot_count || 0));
-                          setShowSlotsModal(true);
-                        }}
-                        className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-2 rounded transition-all active:scale-95 flex items-center justify-center gap-1.5 w-full"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        Edit Slots
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -1712,7 +1789,86 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
         </Modal>
       )}
 
-      {/* Edit slots override modal */}
+      {/* Edit Audition Activity Slots Modal */}
+      {showAuditionSlotsModal && selectedEventForAuditionSlots && (
+        <Modal
+          title={`Edit Audition Activity Slots (100 Capacity Each)`}
+          onClose={() => {
+            setShowAuditionSlotsModal(false);
+            setSelectedEventForAuditionSlots(null);
+          }}
+        >
+          <form onSubmit={handleUpdateAuditionSlots} className="space-y-5">
+            <p className="text-xs text-gray-400 font-barlow uppercase tracking-wider leading-relaxed">
+              Set the filled slot count for each audition discipline (0 to 100). Remaining spots = 100 minus Filled slots.
+            </p>
+
+            <div className="space-y-4">
+              {[
+                { id: 'Running', label: 'Running Audition', icon: '🏃' },
+                { id: 'Cycling', label: 'Cycling Audition', icon: '🚴' },
+                { id: 'Weight Holding', label: 'Weight Holding Audition', icon: '🏋️' },
+                { id: 'Dumbbell Holding', label: 'Dumbbell Holding Audition', icon: '💪' },
+                { id: 'Plank', label: 'Plank Challenge Audition', icon: '⏱️' },
+              ].map((item) => {
+                const filledVal = (auditionSlotsForm as any)[item.id] ?? 0;
+                const rem = Math.max(0, 100 - Number(filledVal));
+                return (
+                  <div key={item.id} className="bg-black/50 border border-white/10 p-3.5 rounded-lg space-y-2 font-barlow">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-white uppercase">{item.icon} {item.label}</span>
+                      <span className="text-gold-premium font-bold uppercase">{rem} Spots Remaining</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="text-xs text-gray-400 uppercase font-bold shrink-0">Filled Slots:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={filledVal}
+                        onChange={(e) =>
+                          setAuditionSlotsForm((prev) => ({
+                            ...prev,
+                            [item.id]: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)),
+                          }))
+                        }
+                        className="w-full bg-black border border-white/10 rounded px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-white/10 font-barlow">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAuditionSlotsModal(false);
+                  setSelectedEventForAuditionSlots(null);
+                }}
+                className="px-4 py-2 text-xs text-gray-400 uppercase hover:text-white transition-colors font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={updatingSlots}
+                className="px-6 py-2.5 gold-gradient-bg text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {updatingSlots ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Audition Slots</span>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
       {showSlotsModal && selectedEventForSlots && (
         <Modal title={`Manage Slots: ${selectedEventForSlots.title}`} onClose={() => { setShowSlotsModal(false); setSelectedEventForSlots(null); }}>
           <form onSubmit={handleUpdateSlots} className="space-y-4">
@@ -1802,8 +1958,9 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   </div>
                 </div>
                 <div className="bg-black/40 border border-white/5 p-3 rounded-lg sm:col-span-2">
-                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Event</span>
+                  <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Event & Selected Audition (100 Slots)</span>
                   <span className="text-gold-premium text-sm font-semibold uppercase">{viewingReg.event_id?.title || '—'}</span>
+                  <div className="text-amber-400 font-bold text-xs mt-1">🎯 Selected Audition: {viewingReg.audition_option || 'Running Audition'}</div>
                 </div>
                 <div className="bg-black/40 border border-white/5 p-3 rounded-lg">
                   <span className="text-gray-500 text-[10px] uppercase block tracking-wider font-bold">Full Name</span>
