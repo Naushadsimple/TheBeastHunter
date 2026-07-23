@@ -12,7 +12,11 @@ export function getSiteUrl(request?: Request): string {
   if (request) {
     const origin = request.headers.get('origin');
     if (origin) return origin.replace(/\/$/, '');
+
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || (process.env.NODE_ENV === 'development' ? 'http' : 'https');
+    if (host) return `${proto}://${host}`.replace(/\/$/, '');
   }
 
-  return 'http://localhost:3000';
+  return process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://thebeasthunterchallenge.com';
 }

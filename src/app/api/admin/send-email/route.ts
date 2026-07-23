@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
+import { getSiteUrl } from '@/lib/site-url';
 
 function replacePlaceholders(template: string, data: {
   full_name: string;
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
 
     // Process each email and insert database logs
     const logPromises = recipients.map(async (rec) => {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thebeasthunterchallenge.com';
+      const siteUrl = getSiteUrl(req);
       const ticketUrl = `${siteUrl}/payment/success?registration_id=${rec.id}`;
 
       const placeholderData = {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendApprovalEmail } from '@/lib/mail';
+import { getSiteUrl } from '@/lib/site-url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Registration not found' }, { status: 404 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = getSiteUrl(request);
     const passUrl = `${baseUrl}/payment/success?registration_id=${registrationId}`;
 
     // Send pass approval email via Nodemailer

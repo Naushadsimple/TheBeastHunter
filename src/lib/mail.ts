@@ -3,12 +3,12 @@ import nodemailer from 'nodemailer';
 // Create a single reusable transporter
 const getTransporter = () => {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '587');
-  const user = process.env.SMTP_USER || 'thebeasthunterchallenge@gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
-  if (!pass) {
-    console.warn('Nodemailer SMTP_PASS is missing. Emails will fail to send.');
+  if (!user || !pass) {
+    console.warn('Nodemailer SMTP_USER or SMTP_PASS environment variables are missing. Please set SMTP_USER and SMTP_PASS in .env.local.');
   }
 
   return nodemailer.createTransport({
@@ -16,14 +16,14 @@ const getTransporter = () => {
     port,
     secure: port === 465, // True for 465, false for 587/other
     auth: {
-      user,
-      pass,
+      user: user || '',
+      pass: pass || '',
     },
   });
 };
 
-const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || 'thebeasthunterchallenge@gmail.com';
-const FROM_NAME = process.env.SMTP_FROM_NAME || 'The Beast Hunter';
+const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@thebeasthunterchallenge.com';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'The Beast Hunter Challenge';
 
 // Premium Dark Theme Email Shell Wrapper
 function getEmailTemplate(title: string, contentHtml: string): string {

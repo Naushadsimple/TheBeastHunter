@@ -38,7 +38,11 @@ export const metadata: Metadata = {
   },
   description: "Discover upcoming races, register online, challenge yourself, and push your limits with the premium fitness event platform.",
   keywords: ["fitness events", "marathons", "runs", "challenges", "athletic races", "India runs", "The Beast Hunter Challenge"],
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://thebeasthunterchallenge.com"
+  ),
   openGraph: {
     title: "The Beast Hunter Challenge | Premium Fitness Events",
     description: "Discover upcoming races, register online, and push your limits.",

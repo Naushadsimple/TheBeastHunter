@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
+import { getSiteUrl } from '@/lib/site-url';
 
 export async function POST(request: Request) {
   const auth = await getAdminSession();
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       const orderId = payment?.cashfree_order_id;
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const baseUrl = getSiteUrl(request);
       const passUrl = orderId
         ? `${baseUrl}/payment/success?order_id=${orderId}`
         : `${baseUrl}/payment/success?registration_id=${registrationId}`;

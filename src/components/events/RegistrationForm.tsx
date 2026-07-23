@@ -187,7 +187,14 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
     setError(null);
 
     try {
-      const functionsUrl = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL || 'https://riyaseiklavfzxjldzrg.supabase.co/functions/v1';
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const functionsUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ||
+        (supabaseUrl ? `${supabaseUrl.replace(/\/$/, '')}/functions/v1` : '');
+
+      if (!functionsUrl) {
+        throw new Error('Supabase Edge Functions URL is not configured. Please set NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL in your environment variables.');
+      }
 
       // 1. Create Razorpay order via Supabase Edge Function
       const createRes = await fetch(`${functionsUrl}/razorpay-create-order`, {
@@ -225,8 +232,13 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
         throw new Error('Razorpay SDK failed to load. Please refresh and try again.');
       }
 
+      const razorpayKey = orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        throw new Error('Razorpay Key ID is missing. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in your environment variables.');
+      }
+
       const options = {
-        key: orderData.keyId || 'rzp_test_TFKoXhr5XGpAFJ',
+        key: razorpayKey,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: 'The Beast Hunter Challenge',
