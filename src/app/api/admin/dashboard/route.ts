@@ -13,6 +13,7 @@ export async function GET() {
     const [
       eventsRes,
       registrationsRes,
+      oldRegistrationsRes,
       sponsorsRes,
       paymentsRes,
       usersRes,
@@ -22,12 +23,17 @@ export async function GET() {
         .from('registrations')
         .select('*, event_id(id, title, slug, event_date), payments(cashfree_order_id, status)')
         .order('created_at', { ascending: false }),
+      db
+        .from('old_registrations')
+        .select('*, event_id(id, title, slug, event_date)')
+        .order('created_at', { ascending: false }),
       db.from('sponsors').select('*').order('display_order', { ascending: true }),
       db.from('payments').select('total_amount, status').eq('status', 'success'),
       db.from('users').select('id', { count: 'exact', head: true }),
     ]);
 
     const registrations = registrationsRes.data || [];
+    const oldRegistrations = oldRegistrationsRes.data || [];
     const confirmed = registrations.filter((r) => r.status === 'confirmed');
     const pending = registrations.filter((r) => r.status === 'pending');
     const totalRevenue =
@@ -39,12 +45,14 @@ export async function GET() {
         totalChallengers: registrations.length,
         confirmedChallengers: confirmed.length,
         pendingChallengers: pending.length,
+        archivedChallengers: oldRegistrations.length,
         totalEvents: eventsRes.data?.length || 0,
         totalUsers: usersRes.count || 0,
         activeSponsors: (sponsorsRes.data || []).filter((s) => s.is_active).length,
       },
       events: eventsRes.data || [],
       registrations,
+      oldRegistrations,
       sponsors: sponsorsRes.data || [],
     });
   } catch (err) {

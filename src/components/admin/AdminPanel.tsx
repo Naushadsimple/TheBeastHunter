@@ -103,6 +103,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   });
   const [events, setEvents] = useState<any[]>([]);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [oldRegistrations, setOldRegistrations] = useState<any[]>([]);
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [viewingProofUrl, setViewingProofUrl] = useState<string | null>(null);
@@ -382,6 +383,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     setStats(data.stats);
     setEvents(data.events);
     setRegistrations(data.registrations);
+    setOldRegistrations(data.oldRegistrations || []);
     setSponsors(data.sponsors);
     setNeedsAuth(false);
     setAuthLoadError(null);
@@ -1562,21 +1564,70 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             </div>
           </div>
 
-          {/* Archived Challengers / Registrations */}
-          <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden p-6 space-y-4">
+          {/* Archived Challengers / Registrations from old_registrations Table */}
+          <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden p-6 space-y-4 font-barlow">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h3 className="font-bebas text-xl text-white uppercase tracking-wide flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-gold-premium" /> Historical Registration Records
-              </h3>
-              <div className="relative">
-                <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search past challenger..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-black/60 border border-white/10 text-xs text-white pl-9 pr-3 py-2 rounded focus:outline-none focus:border-gold-premium w-64 uppercase tracking-wider font-barlow"
-                />
+              <div>
+                <h3 className="font-bebas text-xl text-white uppercase tracking-wide flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-gold-premium" />
+                  Historical Registration Records ({oldRegistrations.length} Total in `old_registrations`)
+                </h3>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mt-0.5">
+                  Isolate archive table storing all past Beast Hunter event entries
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search past challenger..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-black/60 border border-white/10 text-xs text-white pl-9 pr-3 py-2 rounded focus:outline-none focus:border-gold-premium w-56 uppercase tracking-wider font-barlow"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const csvContent =
+                      'data:text/csv;charset=utf-8,' +
+                      ['Registration Code,Full Name,Email,Phone,Gender,Age,City,Event,Status,Payment Status,Transaction ID,Audition Option,Registered Date']
+                        .concat(
+                          oldRegistrations.map((c) =>
+                            [
+                              `"${c.registration_code || ''}"`,
+                              `"${c.full_name || ''}"`,
+                              `"${c.email || ''}"`,
+                              `"${c.phone || ''}"`,
+                              `"${c.gender || ''}"`,
+                              `"${c.age || ''}"`,
+                              `"${c.city || ''}"`,
+                              `"${c.event_id?.title || 'Past Event'}"`,
+                              `"${c.status || ''}"`,
+                              `"${c.payment_status || ''}"`,
+                              `"${c.transaction_id || ''}"`,
+                              `"${c.audition_option || 'Running'}"`,
+                              `"${c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN') : ''}"`,
+                            ].join(',')
+                          )
+                        )
+                        .join('\n');
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', encodedUri);
+                    link.setAttribute('download', `archived_challengers_${new Date().toISOString().slice(0, 10)}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-2 rounded transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export Old CSV</span>
+                </button>
               </div>
             </div>
 
@@ -1592,15 +1643,14 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {registrations.filter((c: any) => c.event_id?.status === 'archived' || c.event_id?.status === 'completed' || c.event_id?.id === '597a367a-26de-4390-a41d-ad400b0417cf' || c.event_id?.title?.includes('Palghar')).length === 0 ? (
+                  {oldRegistrations.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-6 text-center text-gray-500 uppercase tracking-widest">
-                        No archived registrations found
+                        No archived registrations found in `old_registrations` table
                       </td>
                     </tr>
                   ) : (
-                    registrations
-                      .filter((c: any) => c.event_id?.status === 'archived' || c.event_id?.status === 'completed' || c.event_id?.id === '597a367a-26de-4390-a41d-ad400b0417cf' || c.event_id?.title?.includes('Palghar'))
+                    oldRegistrations
                       .filter((c: any) => {
                         if (!searchQuery) return true;
                         const q = searchQuery.toLowerCase();
@@ -1618,7 +1668,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                             <div>{ch.email}</div>
                             <div className="text-gray-500 font-mono">{ch.phone}</div>
                           </td>
-                          <td className="px-4 py-3 text-xs text-gray-400">{ch.event_title || 'Past Event'}</td>
+                          <td className="px-4 py-3 text-xs text-gray-400">{ch.event_id?.title || 'Past Event'}</td>
                           <td className="px-4 py-3 text-center">
                             <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold border ${
                               ch.status === 'confirmed'
