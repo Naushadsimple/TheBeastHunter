@@ -301,7 +301,15 @@ export default function UpcomingRaces({ events }: UpcomingRacesProps) {
                   <div className="grid grid-cols-2 gap-4 border-y border-white/10 py-4 font-barlow text-xs uppercase tracking-wider text-gray-300">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gold-premium" />
-                      <span>15 Nov 2026</span>
+                      <span>
+                        {activeEvent.event_date
+                          ? new Date(activeEvent.event_date).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '27 Sep 2026'}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin className="w-4 h-4 text-gold-premium" />
