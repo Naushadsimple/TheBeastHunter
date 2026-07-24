@@ -102,7 +102,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
     dob: '',
     gender: 'male',
     instaId: '',
-    city: 'Palghar',
+    city: 'Mumbai',
     emergencyContactName: '',
     emergencyContactPhone: '',
     tshirtSize: 'M',
@@ -479,7 +479,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                placeholder="e.g. Palghar, Mumbai"
+                placeholder="e.g. Mumbai"
                 className="w-full bg-black/50 border border-white/10 rounded px-4 py-3 text-white font-barlow focus:outline-none focus:border-gold-premium transition-colors"
               />
             </div>
