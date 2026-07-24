@@ -99,22 +99,21 @@ export default function TermsOfServicePage() {
         </p>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="font-barlow text-xl font-bold text-white uppercase tracking-wider">
-          7. Conduct
+      <section className="space-y-4 border-l-2 border-gold-premium pl-4 py-2 bg-gold-premium/5 rounded-r-lg">
+        <h2 className="font-barlow text-xl font-bold text-gold-glow uppercase tracking-wider">
+          7. Strict Policy: One Person, One Audition Only
         </h2>
-        <p>
-          Participants must follow marshal instructions, respect other runners, and not use
-          prohibited substances. We may remove any participant who endangers others without refund.
+        <p className="text-white leading-relaxed">
+          Each contestant is strictly allowed to register and participate in <strong>only ONE audition discipline</strong> (Running, Cycling, Weight Holding, Dumbbell Holding, or Plank). Participating in multiple auditions is strictly forbidden. If a participant registers for multiple audition options using different emails, phone numbers, or credentials, only their first verified audition entry will be recognized as valid. All subsequent entries will be automatically disqualified without refund or entitlement to compete.
         </p>
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-4 border-l-2 border-amber-500 pl-4 py-2 bg-amber-500/5 rounded-r-lg">
         <h2 className="font-barlow text-xl font-bold text-white uppercase tracking-wider">
-          8. Liability &amp; Official Decisions
+          8. Absolute Finality of Judges&apos; &amp; Marshals&apos; Decisions
         </h2>
-        <p>
-          If any injury, health issue, or accident happens to a challenger or participant, we hold no responsibility. The decisions made by the host, representatives, referees, or competition checkers are absolutely final, and no appeals can be made against them.
+        <p className="text-white leading-relaxed">
+          The rulings and decisions made by official judges, referees, host representatives, course marshals, and competition checkers are <strong>100% absolute, non-negotiable, and final</strong>. No appeals, disputes, or arguments against official referee decisions, timing records, or disqualification rulings will be entertained under any circumstances.
         </p>
       </section>
 

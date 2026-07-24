@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   AlertCircle,
   ShieldCheck,
+  ShieldAlert,
   CreditCard,
   Flame,
   Dumbbell,
@@ -287,20 +288,23 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
             router.push(`/payment/success?registration_id=${orderData.registrationId}`);
           } catch (err: any) {
             console.error('Razorpay verification error:', err);
-            setError(err.message || 'Payment verification failed');
+            setError(`Payment Failed: ${err.message || 'Verification could not be completed.'}. Please contact support if money was debited.`);
             setSubmitLoading(false);
           }
         },
         modal: {
           ondismiss: function () {
             setSubmitLoading(false);
+            setError('Payment Cancelled: You closed the payment window before completing the transaction. Please click "Pay via Razorpay" to retry.');
           },
         },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (resp: any) {
-        setError(resp.error?.description || 'Payment failed. Please try again.');
+        console.error('Razorpay SDK payment.failed:', resp);
+        const reason = resp.error?.description || resp.error?.reason || 'Transaction failed or was declined by bank.';
+        setError(`Payment Failed: ${reason}. Your account was not charged. Please try again or use another payment method.`);
         setSubmitLoading(false);
       });
 
@@ -354,6 +358,19 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
             className="gold-gradient-bg h-full transition-all duration-500"
             style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
           />
+        </div>
+      </div>
+
+      {/* STRICT RULE NOTICE: ONE PERSON, ONE AUDITION */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-amber-500/15 via-gold-premium/10 to-amber-500/15 border border-gold-premium/40 rounded-xl flex items-start space-x-3 text-gold-glow text-xs font-barlow leading-relaxed shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+        <ShieldAlert className="w-5 h-5 text-gold-premium shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold uppercase tracking-wider text-gold-premium block mb-0.5">
+            Strict Rule: One Person, One Audition Policy
+          </span>
+          <span>
+            Each contestant is strictly allowed to register and participate in only <strong>1 Audition Discipline</strong>. Registering for multiple audition options is strictly prohibited. If a participant enters multiple auditions, only their first verified entry will be valid, and all other entries will be disqualified without refund.
+          </span>
         </div>
       </div>
 
