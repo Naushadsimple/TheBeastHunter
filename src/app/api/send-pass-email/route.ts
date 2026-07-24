@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const mailResult = await sendApprovalEmail(
       registration.email,
       registration,
-      registration.event_id || { title: 'The Beast Hunter Audition 2026', venue: 'Palghar Sports Complex' },
+      registration.event_id || { title: 'The Beast Hunter Audition 2026', venue: 'Mumbai Sports Complex' },
       passUrl
     );
 

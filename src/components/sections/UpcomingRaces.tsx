@@ -33,6 +33,8 @@ export interface DBEvent {
   max_participants: number;
   registration_count?: number;
   displayed_slot_count?: number;
+  venue?: string;
+  location_badge?: string;
 }
 
 interface UpcomingRacesProps {
@@ -279,7 +281,7 @@ export default function UpcomingRaces({ events }: UpcomingRacesProps) {
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm border border-gold-premium/40 px-3 py-1 rounded text-gold-premium font-bebas text-lg">
-                    Palghar / Mumbai
+                    Mumbai
                   </div>
                 </div>
 
@@ -303,7 +305,7 @@ export default function UpcomingRaces({ events }: UpcomingRacesProps) {
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin className="w-4 h-4 text-gold-premium" />
-                      <span>Palghar Sports Complex</span>
+                      <span>{activeEvent.venue || 'Mumbai Sports Complex'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="w-4 h-4 text-gold-premium" />
