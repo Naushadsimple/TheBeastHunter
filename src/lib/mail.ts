@@ -2,8 +2,8 @@ import nodemailer from 'nodemailer';
 
 // Create a single reusable transporter
 const getTransporter = () => {
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const host = process.env.SMTP_HOST || 'smtpout.secureserver.net';
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
@@ -14,16 +14,19 @@ const getTransporter = () => {
   return nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // True for 465, false for 587/other
+    secure: port === 465 || process.env.SMTP_SECURE === 'true',
     auth: {
       user: user || '',
       pass: pass || '',
     },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 };
 
-const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@thebeasthunterchallenge.com';
-const FROM_NAME = process.env.SMTP_FROM_NAME || 'The Beast Hunter Challenge';
+const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'info@thebeasthunterchallenge.com';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'The Beast Hunter';
 
 // Premium Dark Theme Email Shell Wrapper
 function getEmailTemplate(title: string, contentHtml: string): string {
