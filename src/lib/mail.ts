@@ -150,7 +150,7 @@ function getEmailTemplate(title: string, contentHtml: string): string {
             </div>
             <div class="email-footer">
               <p>&copy; ${new Date().getFullYear()} The Beast Hunter Challenge. All Rights Reserved.</p>
-              <p>For support, email us at <a href="mailto:thebeasthunterchallenge@gmail.com">thebeasthunterchallenge@gmail.com</a></p>
+              <p>For support, email us at <a href="mailto:info@thebeasthunterchallenge.com">info@thebeasthunterchallenge.com</a></p>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ export async function sendPendingEmail(
       </tr>
     </table>
 
-    <p style="margin-top: 30px;">If you have any questions or need to correct any details, please contact our support team at <a href="mailto:thebeasthunterchallenge@gmail.com" style="color: #D4AF37;">thebeasthunterchallenge@gmail.com</a>.</p>
+    <p style="margin-top: 30px;">If you have any questions or need to correct any details, please contact our support team at <a href="mailto:info@thebeasthunterchallenge.com" style="color: #D4AF37;">info@thebeasthunterchallenge.com</a>.</p>
   `;
 
   return sendEmail(to, subject, getEmailTemplate(subject, content));
@@ -309,7 +309,7 @@ export async function sendRejectionEmail(
       <p style="margin: 5px 0 0 0; font-size: 14px; color: #aaaaaa;">The transaction ID or screenshot provided did not match our bank statements. As a result, your slot has been released.</p>
     </div>
 
-    <p>If this was an error or you wish to provide a corrected transaction proof, please contact us immediately by replying to this email at <a href="mailto:thebeasthunterchallenge@gmail.com" style="color: #D4AF37;">thebeasthunterchallenge@gmail.com</a>.</p>
+    <p>If this was an error or you wish to provide a corrected transaction proof, please contact us immediately by replying to this email at <a href="mailto:info@thebeasthunterchallenge.com" style="color: #D4AF37;">info@thebeasthunterchallenge.com</a>.</p>
     
     <p>If a debit occurred from your account, any verified payments will be refunded back to the originating account within 5-7 business days.</p>
   `;

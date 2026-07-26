@@ -64,7 +64,7 @@ export default function ContactPage() {
             <div className="lg:col-span-1 space-y-6">
               {[
                 { title: 'Support Hotlines', val: '84217 87508', icon: Phone, label: '9:00 AM - 6:00 PM IST' },
-                { title: 'Electronic Mail', val: 'thebeasthunterchallenge@gmail.com', icon: Mail, label: 'Average response: 2 hours' },
+                { title: 'Electronic Mail', val: 'info@thebeasthunterchallenge.com', icon: Mail, label: 'Average response: 2 hours' },
                 { title: 'Command Headquarters', val: 'Palghar, Maharashtra 401404', icon: MapPin, label: 'By Appointment Only' }
               ].map((item, idx) => (
                 <div key={idx} className="bg-dark-gray/30 border border-white/5 rounded-lg p-6 space-y-3 hover:border-gold-premium/20 transition-all duration-300">

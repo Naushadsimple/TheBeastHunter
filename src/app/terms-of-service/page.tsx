@@ -81,8 +81,8 @@ export default function TermsOfServicePage() {
         <p>
           Registration fees are paid via secure manual UPI transfers. Refund eligibility depends on the specific
           event policy and timing of cancellation. Contact{' '}
-          <a href="mailto:thebeasthunterchallenge@gmail.com" className="text-gold-premium hover:underline">
-            thebeasthunterchallenge@gmail.com
+          <a href="mailto:info@thebeasthunterchallenge.com" className="text-gold-premium hover:underline">
+            info@thebeasthunterchallenge.com
           </a>{' '} Or Call this number "+91 84217 87508"
           for refund requests.
         </p>

@@ -32,7 +32,7 @@ export default function SponsorsSection({ sponsors }: SponsorsSectionProps) {
           </p>
           <div className="mt-8">
             <a
-              href="mailto:thebeasthunterchallenge@gmail.com"
+              href="mailto:info@thebeasthunterchallenge.com"
               className="inline-flex items-center justify-center font-barlow text-sm font-black uppercase tracking-wider text-black gold-gradient-bg px-8 py-3.5 rounded hover:scale-105 transition-all duration-300 hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
             >
               Become an Official Sponsor
