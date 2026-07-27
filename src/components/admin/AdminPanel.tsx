@@ -1457,49 +1457,64 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                     Manage filled & remaining slot counts for all 5 audition disciplines (Running, Cycling, Weight Holding, Dumbbell Holding, Plank)
                   </p>
                 </div>
-                {events.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAuditionSlotsModal(events[0])}
-                    className="gold-gradient-bg text-black text-xs font-black uppercase px-4 py-2.5 rounded hover:scale-105 active:scale-95 transition-all font-barlow shrink-0 flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit Audition Activity Slots</span>
-                  </button>
-                )}
+                {(() => {
+                  const activeAuditionEvent = events.find(
+                    (e) => e.slug === 'beast-hunter-audition-2026' || e.id === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+                  ) || events[events.length - 1] || events[0];
+
+                  return (
+                    activeAuditionEvent && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAuditionSlotsModal(activeAuditionEvent)}
+                        className="gold-gradient-bg text-black text-xs font-black uppercase px-4 py-2.5 rounded hover:scale-105 active:scale-95 transition-all font-barlow shrink-0 flex items-center gap-1.5 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span>Edit Audition Activity Slots ({activeAuditionEvent.title})</span>
+                      </button>
+                    )
+                  );
+                })()}
               </div>
 
               {/* Audition Activity Slots Display Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 font-barlow">
-                {[
-                  { name: 'Running', icon: '🏃' },
-                  { name: 'Cycling', icon: '🚴' },
-                  { name: 'Weight Holding', icon: '🏋️' },
-                  { name: 'Dumbbell Holding', icon: '💪' },
-                  { name: 'Plank', icon: '⏱️' },
-                ].map((act) => {
-                  const evSlots = events[0]?.audition_slots || {};
-                  const filled = evSlots[act.name]?.filled ?? 0;
-                  const capacity = 100;
-                  const remaining = Math.max(0, capacity - filled);
-                  return (
-                    <div key={act.name} className="bg-dark-gray/60 border border-white/10 p-3.5 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white uppercase">{act.icon} {act.name}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gold-premium/10 text-gold-premium uppercase border border-gold-premium/30">
-                          {remaining} Left
-                        </span>
+                {(() => {
+                  const activeAuditionEvent = events.find(
+                    (e) => e.slug === 'beast-hunter-audition-2026' || e.id === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+                  ) || events[events.length - 1] || events[0];
+
+                  const evSlots = activeAuditionEvent?.audition_slots || {};
+
+                  return [
+                    { name: 'Running', icon: '🏃' },
+                    { name: 'Cycling', icon: '🚴' },
+                    { name: 'Weight Holding', icon: '🏋️' },
+                    { name: 'Dumbbell Holding', icon: '💪' },
+                    { name: 'Plank', icon: '⏱️' },
+                  ].map((act) => {
+                    const filled = evSlots[act.name]?.filled ?? 0;
+                    const capacity = 100;
+                    const remaining = Math.max(0, capacity - filled);
+                    return (
+                      <div key={act.name} className="bg-dark-gray/60 border border-white/10 p-3.5 rounded-xl space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white uppercase">{act.icon} {act.name}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gold-premium/10 text-gold-premium uppercase border border-gold-premium/30">
+                            {remaining} Left
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-baseline text-xs text-gray-400">
+                          <span>Filled: <strong className="text-white">{filled}</strong> / {capacity}</span>
+                          <span className="text-gold-glow font-mono font-bold">{Math.round((filled / capacity) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-gold-premium h-full transition-all duration-500" style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }} />
+                        </div>
                       </div>
-                      <div className="flex justify-between items-baseline text-xs text-gray-400">
-                        <span>Filled: <strong className="text-white">{filled}</strong> / {capacity}</span>
-                        <span className="text-gold-glow font-mono font-bold">{Math.round((filled / capacity) * 100)}%</span>
-                      </div>
-                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-gold-premium h-full transition-all duration-500" style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>
