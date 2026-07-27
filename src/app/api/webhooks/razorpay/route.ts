@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendApprovalEmail } from '@/lib/mail';
 import { getSiteUrl } from '@/lib/site-url';
+import { syncEventAuditionSlots } from '@/lib/slot-sync';
 
 export async function POST(request: Request) {
   try {
@@ -92,23 +93,9 @@ export async function POST(request: Request) {
             })
             .eq('id', paymentRecord.id);
 
-          // Increment filled slot in event.audition_slots
-          if (registration.event_id?.id && registration.audition_option) {
-            const auditionOpt = registration.audition_option;
-            const currentSlots = registration.event_id.audition_slots || {};
-            const currentFilled = currentSlots[auditionOpt]?.filled ?? 0;
-            const newSlots = {
-              ...currentSlots,
-              [auditionOpt]: {
-                capacity: 100,
-                filled: currentFilled + 1,
-              },
-            };
-
-            await db
-              .from('events')
-              .update({ audition_slots: newSlots })
-              .eq('id', registration.event_id.id);
+          // Sync audition slots & total count dynamically
+          if (registration.event_id?.id) {
+            await syncEventAuditionSlots(db, registration.event_id.id);
           }
 
           // Send approval digital pass email

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
 import { getSiteUrl } from '@/lib/site-url';
+import { syncEventAuditionSlots } from '@/lib/slot-sync';
 
 export async function POST(request: Request) {
   const auth = await getAdminSession();
@@ -59,33 +60,7 @@ export async function POST(request: Request) {
 
       // --- AUTOMATIC SLOT SYNCHRONIZATION (APPROVE) ---
       if (targetEventId) {
-        // Query the count of confirmed registrations for this event
-        const { count: confirmedCount } = await db
-          .from('registrations')
-          .select('id', { count: 'exact', head: true })
-          .eq('event_id', targetEventId)
-          .eq('status', 'confirmed');
-
-        const actualCount = confirmedCount || 0;
-
-        // Query the current displayed slot count
-        const { data: eventData } = await db
-          .from('events')
-          .select('displayed_slot_count')
-          .eq('id', targetEventId)
-          .single();
-
-        const currentDisplayed = eventData?.displayed_slot_count || 0;
-
-        // Update both fields in the events table
-        await db
-          .from('events')
-          .update({
-            actual_registered_count: actualCount,
-            displayed_slot_count: currentDisplayed + 1,
-            updated_at: now,
-          })
-          .eq('id', targetEventId);
+        await syncEventAuditionSlots(db, targetEventId);
       }
 
       // Fetch payment record to obtain the cashfree_order_id (order ID)
@@ -148,23 +123,7 @@ export async function POST(request: Request) {
 
       // --- AUTOMATIC SLOT SYNCHRONIZATION (REJECT) ---
       if (targetEventId) {
-        // Query the count of confirmed registrations for this event
-        const { count: confirmedCount } = await db
-          .from('registrations')
-          .select('id', { count: 'exact', head: true })
-          .eq('event_id', targetEventId)
-          .eq('status', 'confirmed');
-
-        const actualCount = confirmedCount || 0;
-
-        // Update the actual_registered_count field in the events table
-        await db
-          .from('events')
-          .update({
-            actual_registered_count: actualCount,
-            updated_at: now,
-          })
-          .eq('id', targetEventId);
+        await syncEventAuditionSlots(db, targetEventId);
       }
 
       const { sendRejectionEmail } = await import('@/lib/mail');
