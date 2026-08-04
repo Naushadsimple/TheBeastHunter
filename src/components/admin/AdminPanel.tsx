@@ -96,6 +96,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [challengerFilter, setChallengerFilter] = useState<'all' | 'confirmed' | 'pending' | 'cancelled'>('all');
 
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
@@ -553,6 +554,20 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       (r.event_id?.status !== 'archived' && r.event_id?.status !== 'completed' && !r.event_id?.title?.includes('Palghar'))
   );
 
+  const displayRegs = activeRegs.filter((r) => {
+    const isCancelledOrAbandoned =
+      r.status === 'cancelled' ||
+      r.status === 'rejected' ||
+      r.payment_status === 'failed' ||
+      r.payment_status === 'cancelled';
+
+    if (challengerFilter === 'confirmed') return r.status === 'confirmed';
+    if (challengerFilter === 'pending') return r.status === 'pending' && !isCancelledOrAbandoned;
+    if (challengerFilter === 'cancelled') return isCancelledOrAbandoned;
+
+    return true;
+  });
+
   const handleExportCsv = () => {
     if (activeRegs.length === 0) {
       setMessage({ type: 'error', text: 'No active challengers data available to export' });
@@ -990,6 +1005,54 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             </p>
           </div>
 
+          {/* Sub-Filter Tabs */}
+          <div className="flex flex-wrap gap-2 font-barlow text-xs font-bold uppercase pt-1">
+            <button
+              type="button"
+              onClick={() => setChallengerFilter('all')}
+              className={`px-4 py-2 rounded-lg transition-all border ${
+                challengerFilter === 'all'
+                  ? 'bg-gold-premium text-black border-gold-premium shadow-[0_0_10px_rgba(212,175,55,0.4)] font-black'
+                  : 'bg-black/40 text-gray-400 border-white/10 hover:text-white'
+              }`}
+            >
+              All ({activeRegs.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setChallengerFilter('confirmed')}
+              className={`px-4 py-2 rounded-lg transition-all border ${
+                challengerFilter === 'confirmed'
+                  ? 'bg-green-500 text-black border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)] font-black'
+                  : 'bg-black/40 text-gray-400 border-white/10 hover:text-green-400'
+              }`}
+            >
+              🟢 Confirmed ({activeRegs.filter((r) => r.status === 'confirmed').length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setChallengerFilter('pending')}
+              className={`px-4 py-2 rounded-lg transition-all border ${
+                challengerFilter === 'pending'
+                  ? 'bg-yellow-500 text-black border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)] font-black'
+                  : 'bg-black/40 text-gray-400 border-white/10 hover:text-yellow-400'
+              }`}
+            >
+              🟡 Pending Verification ({activeRegs.filter((r) => r.status === 'pending' && r.status !== 'cancelled' && r.payment_status !== 'failed').length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setChallengerFilter('cancelled')}
+              className={`px-4 py-2 rounded-lg transition-all border ${
+                challengerFilter === 'cancelled'
+                  ? 'bg-red-500 text-white border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)] font-black'
+                  : 'bg-black/40 text-gray-400 border-white/10 hover:text-red-400'
+              }`}
+            >
+              🔴 Cancelled / Abandoned ({activeRegs.filter((r) => r.status === 'cancelled' || r.status === 'rejected' || r.payment_status === 'failed' || r.payment_status === 'cancelled').length})
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -1027,14 +1090,14 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {activeRegs.length === 0 ? (
+                  {displayRegs.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-8 text-center text-gray-500 uppercase tracking-widest font-barlow">
-                        No active registrations found in database
+                        No registrations found matching this filter
                       </td>
                     </tr>
                   ) : (
-                    activeRegs.map((r) => (
+                    displayRegs.map((r) => (
                     <tr key={r.id} className="text-gray-300 hover:bg-white/5">
                       <td className="px-4 py-3 font-mono text-xs">{r.registration_code}</td>
                       <td className="px-4 py-3">
@@ -1086,12 +1149,12 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
 
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
-            {activeRegs.length === 0 ? (
+            {displayRegs.length === 0 ? (
               <div className="bg-dark-gray/40 border border-white/10 rounded-xl p-6 text-center text-gray-500 text-xs font-barlow uppercase tracking-widest">
-                No active registrations found in database
+                No registrations found matching this filter
               </div>
             ) : (
-              activeRegs.map((r) => (
+              displayRegs.map((r) => (
               <div key={r.id} className="bg-dark-gray/40 border border-white/10 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -2508,12 +2571,20 @@ function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     confirmed: 'bg-green-500/10 text-green-400 border-green-500/20',
     pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    cancelled: 'bg-red-500/10 text-red-400 border-red-500/30',
+    rejected: 'bg-red-500/10 text-red-400 border-red-500/30',
+    failed: 'bg-red-500/10 text-red-400 border-red-500/30',
     active: 'bg-green-500/10 text-green-400 border-green-500/20',
     inactive: 'bg-red-500/10 text-red-400 border-red-500/20',
   };
+  const label =
+    status === 'cancelled' || status === 'rejected' || status === 'failed'
+      ? 'CANCELLED / ABANDONED'
+      : status;
+
   return (
     <span className={`text-[10px] font-barlow font-bold uppercase px-2 py-0.5 rounded border ${styles[status] || 'bg-gray-500/10 text-gray-400'}`}>
-      {status}
+      {label}
     </span>
   );
 }

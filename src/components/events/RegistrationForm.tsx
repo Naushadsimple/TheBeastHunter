@@ -355,19 +355,41 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
           }
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
             setSubmitLoading(false);
             setError('Payment Cancelled: You closed the payment window before completing the transaction. Please click "Pay via Razorpay" to retry.');
+            try {
+              if (orderData?.registrationId) {
+                await fetch('/api/checkout/cancel', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ registrationId: orderData.registrationId, reason: 'user_dismissed_popup' }),
+                });
+              }
+            } catch (cErr) {
+              console.error('Failed to notify checkout cancellation:', cErr);
+            }
           },
         },
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (resp: any) {
+      rzp.on('payment.failed', async function (resp: any) {
         console.error('Razorpay SDK payment.failed:', resp);
         const reason = resp.error?.description || resp.error?.reason || 'Transaction failed or was declined by bank.';
         setError(`Payment Failed: ${reason}. Your account was not charged. Please try again or use another payment method.`);
         setSubmitLoading(false);
+        try {
+          if (orderData?.registrationId) {
+            await fetch('/api/checkout/cancel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ registrationId: orderData.registrationId, reason: `failed: ${reason}` }),
+            });
+          }
+        } catch (cErr) {
+          console.error('Failed to notify payment failure cancellation:', cErr);
+        }
       });
 
       rzp.open();
