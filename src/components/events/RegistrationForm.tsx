@@ -21,6 +21,9 @@ import {
   Zap,
   Award,
   Loader2,
+  Tag,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { DBEvent } from '@/components/sections/UpcomingRaces';
 
@@ -113,6 +116,59 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
     tosAccepted: false,
   });
 
+  // Coupon State
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMsg, setCouponMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string;
+    code: string;
+    discountType: 'percentage' | 'flat';
+    discountValue: number;
+    discountAmount: number;
+    originalPrice: number;
+    finalAmount: number;
+  } | null>(null);
+
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!couponInput.trim()) return;
+
+    setCouponLoading(true);
+    setCouponMsg(null);
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponInput.trim().toUpperCase(),
+          ticketPrice: event.ticket_price || 1500,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setCouponMsg({ type: 'error', text: data.message || 'Invalid coupon code.' });
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon(data.coupon);
+        setCouponMsg({ type: 'success', text: data.message || 'Coupon applied successfully!' });
+      }
+    } catch (err) {
+      setCouponMsg({ type: 'error', text: 'Failed to apply coupon. Please try again.' });
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponMsg(null);
+  };
+
   // Load Razorpay Script dynamically
   useEffect(() => {
     const script = document.createElement('script');
@@ -204,6 +260,9 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
         body: JSON.stringify({
           eventId: event.id,
           auditionOption: formData.auditionOption,
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: appliedCoupon?.discountAmount || 0,
+          finalAmount: appliedCoupon?.finalAmount ?? event.ticket_price,
           registrationData: {
             fullName: formData.fullName.trim(),
             email: formData.email.trim().toLowerCase(),
@@ -759,13 +818,99 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
             <div>
               <span className="text-xs font-barlow uppercase tracking-widest text-gray-400 block">Total Amount to Pay</span>
               <div className="font-bebas text-5xl text-gold-premium tracking-wide mt-1">
-                ₹{event.ticket_price}
+                ₹{appliedCoupon ? appliedCoupon.finalAmount : event.ticket_price}
               </div>
+              {appliedCoupon && (
+                <span className="text-xs font-barlow text-green-400 font-bold uppercase tracking-wider block mt-1">
+                  🎉 You save ₹{appliedCoupon.discountAmount} with code {appliedCoupon.code}!
+                </span>
+              )}
               <p className="text-xs font-barlow text-gray-400 uppercase tracking-wider mt-2">
                 Event: <span className="text-white font-bold">{event.title}</span> ({formData.auditionOption})
               </p>
             </div>
 
+            {/* COUPON CODE INPUT SECTION */}
+            <div className="bg-black/50 border border-white/15 p-4 rounded-xl space-y-3 text-left">
+              <div className="flex items-center justify-between">
+                <label className="text-xs uppercase font-barlow font-bold tracking-widest text-gold-premium flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-gold-premium" />
+                  Have a Promo / Coupon Code?
+                </label>
+                {appliedCoupon && (
+                  <span className="text-[10px] bg-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded border border-green-500/30 uppercase flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Applied
+                  </span>
+                )}
+              </div>
+
+              {!appliedCoupon ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder="ENTER COUPON CODE (e.g. BEAST20)"
+                    className="flex-1 bg-black/80 border border-white/20 rounded px-3 py-2.5 text-white font-mono text-sm uppercase focus:outline-none focus:border-gold-premium transition-colors placeholder:text-gray-500 placeholder:normal-case placeholder:font-barlow"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="gold-gradient-bg text-black font-barlow text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1 shrink-0"
+                  >
+                    {couponLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Apply</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-gold-premium/10 border border-gold-premium/40 p-3 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gold-premium/20 flex items-center justify-center text-gold-premium font-bold text-xs">
+                      🏷️
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-white font-mono uppercase">{appliedCoupon.code}</span>
+                      <p className="text-[11px] text-green-400 font-barlow">
+                        Saved ₹{appliedCoupon.discountAmount} on your registration!
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-gray-400 hover:text-red-400 p-1 transition-colors"
+                    title="Remove Coupon"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {couponMsg && (
+                <p
+                  className={`text-xs font-barlow flex items-center gap-1.5 ${
+                    couponMsg.type === 'success' ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {couponMsg.type === 'success' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  )}
+                  <span>{couponMsg.text}</span>
+                </p>
+              )}
+            </div>
+
+            {/* SUMMARY DETAILS */}
             <div className="bg-black/40 border border-white/10 p-4 rounded-lg text-left text-xs font-barlow text-gray-300 space-y-2">
               <div className="flex justify-between">
                 <span>Participant:</span>
@@ -778,6 +923,22 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               <div className="flex justify-between">
                 <span>Audition Option:</span>
                 <span className="text-gold-premium font-bold">{formData.auditionOption}</span>
+              </div>
+              <div className="flex justify-between border-t border-white/10 pt-2">
+                <span>Ticket Price:</span>
+                <span className="text-white font-mono font-bold">₹{event.ticket_price}</span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-400">
+                  <span>Coupon Discount ({appliedCoupon.code}):</span>
+                  <span className="font-mono font-bold">-₹{appliedCoupon.discountAmount}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-white/10 pt-2 text-sm font-bold text-white">
+                <span>Final Payable Amount:</span>
+                <span className="text-gold-premium font-mono font-black text-base">
+                  ₹{appliedCoupon ? appliedCoupon.finalAmount : event.ticket_price}
+                </span>
               </div>
             </div>
 
