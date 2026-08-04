@@ -240,47 +240,50 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
       return;
     }
 
-    setSubmitLoading(true);
-    setError(null);
-
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
       const functionsUrl =
         process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ||
         (supabaseUrl ? `${supabaseUrl.replace(/\/$/, '')}/functions/v1` : '');
 
-      if (!functionsUrl) {
-        throw new Error('Supabase Edge Functions URL is not configured. Please set NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL in your environment variables.');
-      }
+      const orderPayload = {
+        eventId: event.id,
+        auditionOption: formData.auditionOption,
+        couponCode: appliedCoupon?.code || null,
+        discountAmount: appliedCoupon?.discountAmount || 0,
+        finalAmount: appliedCoupon?.finalAmount ?? event.ticket_price,
+        registrationData: {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.replace(/\D/g, '').slice(-10),
+          dob: formData.dob,
+          age: 20,
+          gender: formData.gender,
+          instaId: formData.instaId.trim(),
+          city: formData.city,
+          emergencyContactName: formData.emergencyContactName.trim(),
+          emergencyContactPhone: formData.emergencyContactPhone.replace(/\D/g, '').slice(-10),
+          tshirtSize: formData.tshirtSize,
+          bloodGroup: formData.bloodGroup,
+          waiverAccepted: formData.waiverAccepted,
+          tosAccepted: formData.tosAccepted,
+        },
+      };
 
-      // 1. Create Razorpay order via Supabase Edge Function
-      const createRes = await fetch(`${functionsUrl}/razorpay-create-order`, {
+      // 1. Create Razorpay order via API endpoint (with Edge Function fallback)
+      let createRes = await fetch('/api/razorpay-create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventId: event.id,
-          auditionOption: formData.auditionOption,
-          couponCode: appliedCoupon?.code || null,
-          discountAmount: appliedCoupon?.discountAmount || 0,
-          finalAmount: appliedCoupon?.finalAmount ?? event.ticket_price,
-          registrationData: {
-            fullName: formData.fullName.trim(),
-            email: formData.email.trim().toLowerCase(),
-            phone: formData.phone.replace(/\D/g, '').slice(-10),
-            dob: formData.dob,
-            age: 20,
-            gender: formData.gender,
-            instaId: formData.instaId.trim(),
-            city: formData.city,
-            emergencyContactName: formData.emergencyContactName.trim(),
-            emergencyContactPhone: formData.emergencyContactPhone.replace(/\D/g, '').slice(-10),
-            tshirtSize: formData.tshirtSize,
-            bloodGroup: formData.bloodGroup,
-            waiverAccepted: formData.waiverAccepted,
-            tosAccepted: formData.tosAccepted,
-          },
-        }),
+        body: JSON.stringify(orderPayload),
       });
+
+      if (!createRes.ok && functionsUrl) {
+        createRes = await fetch(`${functionsUrl}/razorpay-create-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload),
+        });
+      }
 
       const orderData = await createRes.json();
       if (!createRes.ok || !orderData.razorpayOrderId) {
@@ -956,7 +959,7 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               ) : (
                 <>
                   <CreditCard className="w-5 h-5" />
-                  <span>Pay ₹{event.ticket_price} via Razorpay</span>
+                  <span>Pay ₹{appliedCoupon ? appliedCoupon.finalAmount : event.ticket_price} via Razorpay</span>
                 </>
               )}
             </button>
