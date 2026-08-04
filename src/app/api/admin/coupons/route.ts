@@ -15,6 +15,10 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (error) {
+      if (error.message?.includes('schema cache') || error.code === 'PGRST204' || error.code === '42P01') {
+        console.warn('Coupons table not yet cached in Supabase PostgREST schema.');
+        return NextResponse.json({ coupons: [], message: 'Coupons table initializing in database.' }, { status: 200 });
+      }
       console.error('Error fetching coupons:', error);
       return NextResponse.json({ coupons: [] }, { status: 200 });
     }

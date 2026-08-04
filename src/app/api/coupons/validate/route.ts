@@ -22,6 +22,9 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (error || !coupon) {
+      if (error?.message?.includes('schema cache') || error?.code === 'PGRST204' || error?.code === '42P01') {
+        return NextResponse.json({ valid: false, message: 'Invalid coupon code.' }, { status: 404 });
+      }
       return NextResponse.json({ valid: false, message: 'Invalid coupon code.' }, { status: 404 });
     }
 
