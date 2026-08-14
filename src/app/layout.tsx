@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Bebas_Neue, Barlow_Condensed, Playfair_Display } from "next/font/google";
 import ScrollProvider from "@/components/providers/ScrollProvider";
 import PopupSponsor from "@/components/common/PopupSponsor";
+import IndependencePopup from "@/components/common/IndependencePopup";
 import "./globals.css";
 
 // Load Google Fonts and map them to custom CSS variables
@@ -78,6 +79,7 @@ export default function RootLayout({
         <ScrollProvider>
           {children}
           <PopupSponsor />
+          <IndependencePopup />
         </ScrollProvider>
       </body>
     </html>

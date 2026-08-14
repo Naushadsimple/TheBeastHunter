@@ -33,9 +33,10 @@ import {
   ToggleLeft,
   ToggleRight,
   Percent,
+  Sparkles,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'events' | 'challengers' | 'sponsors' | 'mail' | 'slots' | 'archive' | 'coupons';
+type Tab = 'overview' | 'events' | 'challengers' | 'coupons' | 'popup' | 'sponsors' | 'mail' | 'slots' | 'archive';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -79,6 +80,7 @@ const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'events', label: 'Events', icon: Flame },
   { id: 'challengers', label: 'Challengers', icon: UserCheck },
   { id: 'coupons', label: 'Coupons / Promos', icon: Tag },
+  { id: 'popup', label: 'Promo Popup', icon: Sparkles },
   { id: 'sponsors', label: 'Sponsors', icon: Handshake },
   { id: 'mail', label: 'Mail Center', icon: Mail },
   { id: 'slots', label: 'Manage Slots', icon: Sliders },
@@ -195,11 +197,57 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     }
   }, []);
 
+  // Promo Popup State
+  const [popupSettings, setPopupSettings] = useState({
+    is_enabled: true,
+    title: 'HAPPY INDEPENDENCE DAY! 🇮🇳',
+    subtitle: 'Celebrate Freedom & Unleash Your Inner Beast',
+    coupon_code: 'INDIA15',
+    discount_text: 'Get 15% INSTANT DISCOUNT on all Audition Registrations!',
+    image_url: 'https://images.unsplash.com/photo-1532375810709-75b1da00537c?q=80&w=800&auto=format&fit=crop',
+  });
+  const [popupSaving, setPopupSaving] = useState(false);
+
+  const loadPopupSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings/promo-popup');
+      if (res.ok) {
+        const data = await res.json();
+        setPopupSettings(data);
+      }
+    } catch (err) {
+      console.error('Error loading popup settings:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'coupons') {
       loadCoupons();
     }
-  }, [activeTab, loadCoupons]);
+    if (activeTab === 'popup') {
+      loadPopupSettings();
+    }
+  }, [activeTab, loadCoupons, loadPopupSettings]);
+
+  const handleSavePopupSettings = async () => {
+    setPopupSaving(true);
+    try {
+      const res = await fetch('/api/settings/promo-popup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(popupSettings),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to save popup settings');
+
+      setMessage({ type: 'success', text: 'Promo Popup settings saved successfully!' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to save settings' });
+    } finally {
+      setPopupSaving(false);
+    }
+  };
 
   const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1996,6 +2044,181 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Promo Popup Customization Tab */}
+      {activeTab === 'popup' && (
+        <div className="space-y-6 animate-in fade-in font-barlow">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div>
+              <h2 className="font-bebas text-2xl text-white uppercase flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-gold-premium" />
+                Independence Day & Promo Popup Customization
+              </h2>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">
+                Configure the website popup banner, promo coupon code, toggle visibility, and update custom images
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSavePopupSettings}
+              disabled={popupSaving}
+              className="gold-gradient-bg text-black font-barlow text-xs font-black uppercase tracking-wider px-6 py-3 rounded-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.3)] shrink-0 disabled:opacity-50"
+            >
+              {popupSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              <span>Save Popup Settings</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Form Controls */}
+            <div className="bg-dark-gray/60 border border-white/10 p-6 rounded-xl space-y-5">
+              <h3 className="font-bebas text-xl text-white uppercase border-b border-white/10 pb-2">
+                Popup Settings Controls
+              </h3>
+
+              {/* Enable / Disable Toggle */}
+              <div className="flex items-center justify-between bg-black/40 border border-white/10 p-4 rounded-xl">
+                <div>
+                  <span className="text-sm font-bold text-white uppercase block">
+                    Promo Popup Status
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    When enabled, pops up 3 seconds after visitor opens the website
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPopupSettings({ ...popupSettings, is_enabled: !popupSettings.is_enabled })}
+                  className={`px-4 py-2 rounded-lg font-bold text-xs uppercase flex items-center gap-2 transition-all ${
+                    popupSettings.is_enabled
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/40'
+                  }`}
+                >
+                  {popupSettings.is_enabled ? <ToggleRight className="w-5 h-5 text-green-400" /> : <ToggleLeft className="w-5 h-5 text-red-400" />}
+                  <span>{popupSettings.is_enabled ? 'ENABLED (ACTIVE)' : 'DISABLED (OFF)'}</span>
+                </button>
+              </div>
+
+              {/* Title Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-gray-300">
+                  Popup Headline Title
+                </label>
+                <input
+                  type="text"
+                  value={popupSettings.title}
+                  onChange={(e) => setPopupSettings({ ...popupSettings, title: e.target.value })}
+                  placeholder="HAPPY INDEPENDENCE DAY! 🇮🇳"
+                  className="w-full bg-black/60 border border-white/20 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold-premium font-mono"
+                />
+              </div>
+
+              {/* Subtitle Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-gray-300">
+                  Subtitle Tagline
+                </label>
+                <input
+                  type="text"
+                  value={popupSettings.subtitle}
+                  onChange={(e) => setPopupSettings({ ...popupSettings, subtitle: e.target.value })}
+                  placeholder="Celebrate Freedom & Unleash Your Inner Beast"
+                  className="w-full bg-black/60 border border-white/20 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold-premium"
+                />
+              </div>
+
+              {/* Coupon Code Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-gold-premium flex items-center gap-1">
+                  <Tag className="w-4 h-4 text-gold-premium" />
+                  Promo Coupon Code (Copyable on Click)
+                </label>
+                <input
+                  type="text"
+                  value={popupSettings.coupon_code}
+                  onChange={(e) => setPopupSettings({ ...popupSettings, coupon_code: e.target.value.toUpperCase() })}
+                  placeholder="INDIA15"
+                  className="w-full bg-black/60 border border-white/20 rounded-lg px-4 py-2.5 text-sm text-gold-premium font-mono font-bold uppercase focus:outline-none focus:border-gold-premium"
+                />
+              </div>
+
+              {/* Discount Text Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-gray-300">
+                  Discount Offer Details
+                </label>
+                <input
+                  type="text"
+                  value={popupSettings.discount_text}
+                  onChange={(e) => setPopupSettings({ ...popupSettings, discount_text: e.target.value })}
+                  placeholder="Get 15% INSTANT DISCOUNT on all Audition Registrations!"
+                  className="w-full bg-black/60 border border-white/20 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold-premium"
+                />
+              </div>
+
+              {/* Image URL Input */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase font-bold text-gray-300">
+                  Banner Image URL (Unsplash or direct image link)
+                </label>
+                <input
+                  type="text"
+                  value={popupSettings.image_url}
+                  onChange={(e) => setPopupSettings({ ...popupSettings, image_url: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full bg-black/60 border border-white/20 rounded-lg px-4 py-2.5 text-xs text-gray-300 font-mono focus:outline-none focus:border-gold-premium"
+                />
+              </div>
+            </div>
+
+            {/* Live Interactive Preview */}
+            <div className="bg-dark-gray/60 border border-white/10 p-6 rounded-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <h3 className="font-bebas text-xl text-gold-premium uppercase flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" /> Live Popup Preview
+                </h3>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-gold-premium/20 text-gold-premium border border-gold-premium/30">
+                  {popupSettings.is_enabled ? 'Active on Website' : 'Hidden on Website'}
+                </span>
+              </div>
+
+              {/* Preview Box */}
+              <div className="relative bg-gradient-to-b from-dark-gray to-black border-2 border-gold-premium/40 rounded-xl p-5 text-center space-y-4 shadow-xl">
+                <div className="h-1.5 w-full flex rounded-t overflow-hidden">
+                  <div className="h-full w-1/3 bg-[#FF9933]" />
+                  <div className="h-full w-1/3 bg-white" />
+                  <div className="h-full w-1/3 bg-[#138808]" />
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#FF9933]/20 via-white/10 to-[#138808]/20 border border-white/20 text-[10px] font-bold uppercase tracking-widest text-gold-premium">
+                  <span>🇮🇳 79th Independence Day Special</span>
+                </div>
+
+                {popupSettings.image_url && (
+                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-white/10">
+                    <img src={popupSettings.image_url} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent flex items-end p-3">
+                      <h4 className="font-bebas text-xl text-white">{popupSettings.title}</h4>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-black/60 border border-gold-premium/30 p-3 rounded-lg">
+                  <p className="text-xs text-gray-300 uppercase">{popupSettings.subtitle}</p>
+                  <p className="font-bebas text-lg text-gold-premium">{popupSettings.discount_text}</p>
+                </div>
+
+                <div className="p-3 bg-black/80 border border-gold-premium/60 rounded-lg flex items-center justify-between">
+                  <span className="font-mono font-bold text-gold-premium text-lg">{popupSettings.coupon_code || 'INDIA15'}</span>
+                  <span className="text-xs font-bold text-gold-premium bg-gold-premium/20 px-2 py-1 rounded">Copy Code</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
