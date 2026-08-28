@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
           // Sync audition slots & total count dynamically
           if (registration.event_id?.id) {
-            await syncEventAuditionSlots(db, registration.event_id.id);
+            await syncEventAuditionSlots(db, registration.event_id.id, registration.audition_option);
           }
 
           // Send approval digital pass email

@@ -60,7 +60,7 @@ export async function POST(request: Request) {
 
       // --- AUTOMATIC SLOT SYNCHRONIZATION (APPROVE) ---
       if (targetEventId) {
-        await syncEventAuditionSlots(db, targetEventId);
+        await syncEventAuditionSlots(db, targetEventId, registration?.audition_option);
       }
 
       // Fetch payment record to obtain the cashfree_order_id (order ID)
