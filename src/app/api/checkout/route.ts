@@ -107,11 +107,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const displayedCount = event.displayed_slot_count || 0;
+    // Sold-out check: displayed base count + actual confirmed registrations >= max_participants
+    const totalFilledSlots = (event.displayed_slot_count || 0) + (event.actual_registered_count || 0);
 
     if (
       event.max_participants &&
-      displayedCount >= event.max_participants
+      totalFilledSlots >= event.max_participants
     ) {
       return NextResponse.json({ message: 'This event is sold out' }, { status: 400 });
     }

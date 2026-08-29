@@ -2777,22 +2777,28 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             <div className="space-y-4">
               <div className="bg-black/40 border border-white/5 p-4 rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
-                  <span>Actual Registrations:</span>
-                  <span className="text-white text-sm">{selectedEventForSlots.actual_registered_count || 0}</span>
+                  <span>Base Displayed Slots (Admin Set):</span>
+                  <span className="text-gold-premium text-sm font-mono">{selectedEventForSlots.displayed_slot_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
-                  <span>Current Displayed Slots:</span>
-                  <span className="text-gold-premium text-sm">{selectedEventForSlots.displayed_slot_count || 0}</span>
+                  <span>Actual Confirmed Registrations:</span>
+                  <span className="text-green-400 text-sm font-mono">+ {selectedEventForSlots.actual_registered_count || 0}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider border-t border-white/10 pt-2">
+                  <span className="text-white">= Visible to Users (Total Filled):</span>
+                  <span className="text-gold-premium text-base font-mono font-black">
+                    {(selectedEventForSlots.displayed_slot_count || 0) + (selectedEventForSlots.actual_registered_count || 0)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400 border-t border-white/5 pt-2">
-                  <span>Max Capacity (Max Participants):</span>
+                  <span>Max Capacity:</span>
                   <span className="text-white text-sm">{selectedEventForSlots.max_participants || 'Unlimited'}</span>
                 </div>
               </div>
 
               <label className="block space-y-2">
                 <span className="text-xs text-gray-400 font-barlow font-bold uppercase tracking-wider">
-                  New Displayed Slots Count
+                  Set Base Displayed Slot Count
                 </span>
                 <input
                   type="number"
@@ -2801,12 +2807,16 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   value={overrideSlotsValue}
                   onChange={(e) => setOverrideSlotsValue(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
-                  placeholder="Enter slot count to display..."
+                  placeholder="Enter base slot count (e.g. 250)..."
                 />
               </label>
-              <p className="text-[11px] text-gray-500 font-barlow uppercase leading-relaxed">
-                Note: This value overrides what users see on the event card and details page. Setting this to 30 will show "30 Slots Filled".
-              </p>
+              <div className="bg-gold-premium/10 border border-gold-premium/30 rounded-lg p-3 space-y-1">
+                <p className="text-[11px] text-gold-premium font-barlow font-bold uppercase">How it works:</p>
+                <p className="text-[11px] text-gray-400 font-barlow leading-relaxed">
+                  Set the base number (e.g. <strong className="text-white">250</strong>). Each new confirmed registration adds <strong className="text-white">+1</strong> automatically.
+                  Users see: <strong className="text-white">{overrideSlotsValue || (selectedEventForSlots.displayed_slot_count || 0)} + {selectedEventForSlots.actual_registered_count || 0} = {Number(overrideSlotsValue || selectedEventForSlots.displayed_slot_count || 0) + (selectedEventForSlots.actual_registered_count || 0)}</strong> filled slots.
+                </p>
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-white/10 shrink-0">
               <button

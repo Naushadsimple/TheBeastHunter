@@ -7,6 +7,10 @@ import { Users, Flame } from 'lucide-react';
 interface RealtimeSpotsProps {
   eventId: string;
   maxParticipants: number;
+  /**
+   * initialCount = displayed_slot_count + actual_registered_count
+   * (combined value passed from server-side page.tsx)
+   */
   initialCount: number;
 }
 
@@ -19,12 +23,16 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
       try {
         const { data: freshEvent, error } = await supabase
           .from('events')
-          .select('displayed_slot_count')
+          .select('displayed_slot_count, actual_registered_count')
           .eq('id', eventId)
           .single();
-        
+
         if (!error && freshEvent) {
-          setCount(freshEvent.displayed_slot_count || 0);
+          // Total filled = base displayed boost + real registrations
+          const totalFilled =
+            (freshEvent.displayed_slot_count || 0) +
+            (freshEvent.actual_registered_count || 0);
+          setCount(totalFilled);
         }
       } catch (err) {
         console.error('Error fetching fresh count:', err);
@@ -33,7 +41,7 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
 
     fetchFreshCount();
 
-    // Subscribe to events modifications for this specific event
+    // Subscribe to realtime events table changes for this event
     const channel = supabase
       .channel(`spots-sync-${eventId}`)
       .on(
@@ -45,8 +53,12 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
           filter: `id=eq.${eventId}`,
         },
         (payload) => {
-          if (payload.new && (payload.new as any).displayed_slot_count !== undefined) {
-            setCount((payload.new as any).displayed_slot_count || 0);
+          const updated = payload.new as any;
+          if (updated) {
+            const totalFilled =
+              (updated.displayed_slot_count || 0) +
+              (updated.actual_registered_count || 0);
+            setCount(totalFilled);
           } else {
             fetchFreshCount();
           }
