@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendApprovalEmail } from '@/lib/mail';
 import { getSiteUrl } from '@/lib/site-url';
+import { bookAuditionSlot } from '@/lib/slot-sync';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,12 @@ export async function POST(request: NextRequest) {
 
     if (regError || !registration) {
       return NextResponse.json({ message: 'Registration not found' }, { status: 404 });
+    }
+
+    // Automatically increment audition slot (+1), displayed_slot_count (+1), and actual_registered_count (+1)
+    const targetEventId = typeof registration.event_id === 'object' ? registration.event_id?.id : registration.event_id;
+    if (targetEventId) {
+      await bookAuditionSlot(supabase, targetEventId, registration.audition_option);
     }
 
     const baseUrl = getSiteUrl(request);

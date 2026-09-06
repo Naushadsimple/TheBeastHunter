@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { bookAuditionSlot } from '@/lib/slot-sync';
 
 function calculateAge(dob: string): number {
   const birth = new Date(dob);
@@ -107,8 +108,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sold-out check: displayed base count + actual confirmed registrations >= max_participants
-    const totalFilledSlots = (event.displayed_slot_count || 0) + (event.actual_registered_count || 0);
+    // Sold-out check: displayed slot count >= max_participants
+    const totalFilledSlots = event.displayed_slot_count || 0;
 
     if (
       event.max_participants &&
@@ -163,6 +164,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Automatically increment the booked audition slot (+1), displayed_slot_count (+1), and actual_registered_count (+1)
+    await bookAuditionSlot(supabase, eventId, registrationData.auditionOption || 'Running');
 
     const { error: payError } = await supabase.from('payments').insert({
       registration_id: registration.id,

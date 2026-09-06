@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
 import { getSiteUrl } from '@/lib/site-url';
-import { syncEventAuditionSlots } from '@/lib/slot-sync';
+import { releaseAuditionSlot } from '@/lib/slot-sync';
 
 export async function POST(request: Request) {
   const auth = await getAdminSession();
@@ -58,10 +58,8 @@ export async function POST(request: Request) {
         })
         .eq('registration_id', registrationId);
 
-      // --- AUTOMATIC SLOT SYNCHRONIZATION (APPROVE) ---
-      if (targetEventId) {
-        await syncEventAuditionSlots(db, targetEventId, registration?.audition_option);
-      }
+      // Slot was booked when the registration was submitted.
+      // If admin rejects, releaseAuditionSlot will decrement.
 
       // Fetch payment record to obtain the cashfree_order_id (order ID)
       const { data: payment } = await db
@@ -123,7 +121,7 @@ export async function POST(request: Request) {
 
       // --- AUTOMATIC SLOT SYNCHRONIZATION (REJECT) ---
       if (targetEventId) {
-        await syncEventAuditionSlots(db, targetEventId);
+        await releaseAuditionSlot(db, targetEventId, registration?.audition_option);
       }
 
       const { sendRejectionEmail } = await import('@/lib/mail');

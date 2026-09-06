@@ -61,8 +61,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
       .single();
 
     if (!error && dbEvent) {
-      // Total filled = admin-set base count + actual confirmed registrations
-      registrationCount = (dbEvent.displayed_slot_count || 0) + (dbEvent.actual_registered_count || 0);
+      registrationCount = dbEvent.displayed_slot_count || 0;
       
       const parsedSchedule = typeof dbEvent.schedule === 'string' ? JSON.parse(dbEvent.schedule) : dbEvent.schedule;
       const parsedFaq = typeof dbEvent.faq === 'string' ? JSON.parse(dbEvent.faq) : dbEvent.faq;

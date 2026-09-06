@@ -8,59 +8,160 @@ export const AUDITION_DISCIPLINES = [
   'Plank',
 ] as const;
 
+export interface AuditionSlotData {
+  capacity: number;
+  filled: number;
+}
+
+export type AuditionSlotsMap = Record<string, AuditionSlotData>;
+
 /**
- * SLOT SYNC LOGIC (Correct):
- *
- * - `displayed_slot_count` = Admin manually sets this base number (e.g. 250).
- *   This represents the "pre-filled" or "boost" count shown to users.
- *   THIS FUNCTION NEVER MODIFIES displayed_slot_count.
- *
- * - `actual_registered_count` = Auto-counted from confirmed registrations in DB.
- *   This is updated every time a registration is confirmed/approved.
- *
- * - User sees on frontend: displayed_slot_count + actual_registered_count = total filled slots
- * - Available slots = max_participants - (displayed_slot_count + actual_registered_count)
- *
- * This function ONLY updates actual_registered_count. displayed_slot_count is admin-only.
+ * INCREMENT SLOTS ON REGISTRATION:
+ * When an athlete registers & books an audition slot:
+ * 1. Fetches current events table row.
+ * 2. Increments ONLY that specific audition discipline filled count (+1).
+ * 3. Increments displayed_slot_count (+1).
+ * 4. Increments actual_registered_count (+1).
+ * 5. Saves directly to events table in Supabase!
  */
-export async function syncEventAuditionSlots(
+export async function bookAuditionSlot(
   db: SupabaseClient,
   eventId: string,
-  _unused?: string
-): Promise<{ actualCount: number }> {
+  auditionOption?: string
+): Promise<{ success: boolean; updatedSlots?: AuditionSlotsMap; displayedCount?: number }> {
   try {
-    // Count ACTUAL confirmed registrations from DB
-    const { count, error: countErr } = await db
-      .from('registrations')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_id', eventId)
-      .eq('status', 'confirmed');
+    // 1. Fetch current event slots data from events table
+    const { data: eventData, error: fetchErr } = await db
+      .from('events')
+      .select('displayed_slot_count, actual_registered_count, audition_slots, max_participants')
+      .eq('id', eventId)
+      .single();
 
-    if (countErr) {
-      console.error('[slot-sync] Error counting confirmed registrations:', countErr);
-      return { actualCount: 0 };
+    if (fetchErr || !eventData) {
+      console.error('[slot-sync] Failed to fetch event for slot booking:', fetchErr);
+      return { success: false };
     }
 
-    const confirmedCount = count ?? 0;
+    const currentSlots: AuditionSlotsMap = eventData.audition_slots || {};
+    const updatedSlots: AuditionSlotsMap = { ...currentSlots };
 
-    // ONLY update actual_registered_count. NEVER touch displayed_slot_count.
+    // Standardize selected audition option name
+    const selectedDiscipline = auditionOption?.trim() || 'Running';
+
+    // Ensure all 5 disciplines exist
+    AUDITION_DISCIPLINES.forEach((disc) => {
+      if (!updatedSlots[disc]) {
+        updatedSlots[disc] = { capacity: 100, filled: 0 };
+      }
+    });
+
+    // Increment ONLY the booked audition slot discipline
+    const discData = updatedSlots[selectedDiscipline] || { capacity: 100, filled: 0 };
+    const newFilled = (discData.filled || 0) + 1;
+    const capacity = discData.capacity || 100;
+    updatedSlots[selectedDiscipline] = {
+      capacity,
+      filled: newFilled,
+    };
+
+    // Increment displayed_slot_count +1 and actual_registered_count +1
+    const newDisplayedCount = (eventData.displayed_slot_count || 0) + 1;
+    const newActualCount = (eventData.actual_registered_count || 0) + 1;
+
+    // Save directly to Supabase events table
     const { error: updateErr } = await db
       .from('events')
       .update({
-        actual_registered_count: confirmedCount,
+        audition_slots: updatedSlots,
+        displayed_slot_count: newDisplayedCount,
+        actual_registered_count: newActualCount,
         updated_at: new Date().toISOString(),
       })
       .eq('id', eventId);
 
     if (updateErr) {
-      console.error('[slot-sync] Error updating actual_registered_count:', updateErr);
-    } else {
-      console.log(`[slot-sync] Event ${eventId}: actual_registered_count = ${confirmedCount}`);
+      console.error('[slot-sync] Error updating booked slots in events table:', updateErr);
+      return { success: false };
     }
 
-    return { actualCount: confirmedCount };
+    console.log(`[slot-sync] Booked slot for ${selectedDiscipline}: +1. Displayed: ${newDisplayedCount}, Actual: ${newActualCount}`);
+    return {
+      success: true,
+      updatedSlots,
+      displayedCount: newDisplayedCount,
+    };
   } catch (err) {
-    console.error('[slot-sync] Unexpected error:', err);
-    return { actualCount: 0 };
+    console.error('[slot-sync] Unexpected error booking slot:', err);
+    return { success: false };
   }
+}
+
+/**
+ * DECREMENT SLOTS ON REJECTION / CANCELLATION:
+ * If an admin rejects a registration or a payment is cancelled:
+ * - Decrement that specific audition slot by -1
+ * - Decrement displayed_slot_count by -1
+ * - Decrement actual_registered_count by -1
+ */
+export async function releaseAuditionSlot(
+  db: SupabaseClient,
+  eventId: string,
+  auditionOption?: string
+): Promise<{ success: boolean }> {
+  try {
+    const { data: eventData, error: fetchErr } = await db
+      .from('events')
+      .select('displayed_slot_count, actual_registered_count, audition_slots')
+      .eq('id', eventId)
+      .single();
+
+    if (fetchErr || !eventData) {
+      return { success: false };
+    }
+
+    const currentSlots: AuditionSlotsMap = eventData.audition_slots || {};
+    const updatedSlots: AuditionSlotsMap = { ...currentSlots };
+    const selectedDiscipline = auditionOption?.trim() || 'Running';
+
+    if (updatedSlots[selectedDiscipline]) {
+      const currentFilled = updatedSlots[selectedDiscipline].filled || 0;
+      updatedSlots[selectedDiscipline] = {
+        capacity: updatedSlots[selectedDiscipline].capacity || 100,
+        filled: Math.max(0, currentFilled - 1),
+      };
+    }
+
+    const newDisplayedCount = Math.max(0, (eventData.displayed_slot_count || 0) - 1);
+    const newActualCount = Math.max(0, (eventData.actual_registered_count || 0) - 1);
+
+    await db
+      .from('events')
+      .update({
+        audition_slots: updatedSlots,
+        displayed_slot_count: newDisplayedCount,
+        actual_registered_count: newActualCount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', eventId);
+
+    return { success: true };
+  } catch (err) {
+    console.error('[slot-sync] Unexpected error releasing slot:', err);
+    return { success: false };
+  }
+}
+
+/**
+ * Backward compatibility function for existing route imports.
+ * Calls bookAuditionSlot if an auditionOption is passed.
+ */
+export async function syncEventAuditionSlots(
+  db: SupabaseClient,
+  eventId: string,
+  auditionOption?: string
+): Promise<{ actualCount: number }> {
+  if (auditionOption) {
+    await bookAuditionSlot(db, eventId, auditionOption);
+  }
+  return { actualCount: 0 };
 }

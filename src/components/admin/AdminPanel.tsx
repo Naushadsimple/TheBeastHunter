@@ -34,9 +34,11 @@ import {
   ToggleRight,
   Percent,
   Sparkles,
+  FileSpreadsheet,
 } from 'lucide-react';
+import GymOutreachMailer from '@/components/admin/GymOutreachMailer';
 
-type Tab = 'overview' | 'events' | 'challengers' | 'coupons' | 'popup' | 'sponsors' | 'mail' | 'slots' | 'archive';
+type Tab = 'overview' | 'events' | 'challengers' | 'coupons' | 'popup' | 'outreach' | 'sponsors' | 'mail' | 'slots' | 'archive';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -79,6 +81,7 @@ const TABS: { id: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'events', label: 'Events', icon: Flame },
   { id: 'challengers', label: 'Challengers', icon: UserCheck },
+  { id: 'outreach', label: 'Gym Mailer (Excel)', icon: FileSpreadsheet },
   { id: 'coupons', label: 'Coupons / Promos', icon: Tag },
   { id: 'popup', label: 'Promo Popup', icon: Sparkles },
   { id: 'sponsors', label: 'Sponsors', icon: Handshake },
@@ -1347,6 +1350,11 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             ))}
           </div>
         </div>
+      )}
+
+      {/* Gym Outreach & Automated Excel Mailer */}
+      {activeTab === 'outreach' && (
+        <GymOutreachMailer />
       )}
 
       {/* Mail Center */}
@@ -2777,28 +2785,28 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             <div className="space-y-4">
               <div className="bg-black/40 border border-white/5 p-4 rounded-lg space-y-3">
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
-                  <span>Base Displayed Slots (Admin Set):</span>
-                  <span className="text-gold-premium text-sm font-mono">{selectedEventForSlots.displayed_slot_count || 0}</span>
+                  <span>Current Displayed Slots (User Sees):</span>
+                  <span className="text-gold-premium text-base font-mono font-black">{selectedEventForSlots.displayed_slot_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
                   <span>Actual Confirmed Registrations:</span>
-                  <span className="text-green-400 text-sm font-mono">+ {selectedEventForSlots.actual_registered_count || 0}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider border-t border-white/10 pt-2">
-                  <span className="text-white">= Visible to Users (Total Filled):</span>
-                  <span className="text-gold-premium text-base font-mono font-black">
-                    {(selectedEventForSlots.displayed_slot_count || 0) + (selectedEventForSlots.actual_registered_count || 0)}
-                  </span>
+                  <span className="text-green-400 text-sm font-mono">{selectedEventForSlots.actual_registered_count || 0}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400 border-t border-white/5 pt-2">
-                  <span>Max Capacity:</span>
-                  <span className="text-white text-sm">{selectedEventForSlots.max_participants || 'Unlimited'}</span>
+                  <span>Max Event Capacity:</span>
+                  <span className="text-white text-sm">{selectedEventForSlots.max_participants || 500}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-barlow font-bold uppercase tracking-wider text-gray-400">
+                  <span>Available Spots Left:</span>
+                  <span className="text-gold-premium text-sm font-mono">
+                    {Math.max(0, (selectedEventForSlots.max_participants || 500) - (selectedEventForSlots.displayed_slot_count || 0))}
+                  </span>
                 </div>
               </div>
 
               <label className="block space-y-2">
                 <span className="text-xs text-gray-400 font-barlow font-bold uppercase tracking-wider">
-                  Set Base Displayed Slot Count
+                  Update Displayed Slot Count
                 </span>
                 <input
                   type="number"
@@ -2807,14 +2815,13 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   value={overrideSlotsValue}
                   onChange={(e) => setOverrideSlotsValue(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
-                  placeholder="Enter base slot count (e.g. 250)..."
+                  placeholder="Enter slot count to display (e.g. 250)..."
                 />
               </label>
               <div className="bg-gold-premium/10 border border-gold-premium/30 rounded-lg p-3 space-y-1">
-                <p className="text-[11px] text-gold-premium font-barlow font-bold uppercase">How it works:</p>
+                <p className="text-[11px] text-gold-premium font-barlow font-bold uppercase">Automatic Slot Increment:</p>
                 <p className="text-[11px] text-gray-400 font-barlow leading-relaxed">
-                  Set the base number (e.g. <strong className="text-white">250</strong>). Each new confirmed registration adds <strong className="text-white">+1</strong> automatically.
-                  Users see: <strong className="text-white">{overrideSlotsValue || (selectedEventForSlots.displayed_slot_count || 0)} + {selectedEventForSlots.actual_registered_count || 0} = {Number(overrideSlotsValue || selectedEventForSlots.displayed_slot_count || 0) + (selectedEventForSlots.actual_registered_count || 0)}</strong> filled slots.
+                  Whatever number you set here is directly shown to users. When an athlete registers and picks their audition activity (e.g. Running), the system automatically adds <strong className="text-white">+1</strong> to this displayed count, <strong className="text-white">+1</strong> to actual registrations, and <strong className="text-white">+1</strong> to that activity's filled slot.
                 </p>
               </div>
             </div>

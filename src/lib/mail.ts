@@ -334,3 +334,237 @@ export async function sendCustomEmail(
 
   return sendEmail(to, subject, getEmailTemplate(subject, content));
 }
+
+// 5. Gym Outreach Campaign Email (with Brand Logo & Gold Theme)
+export function getGymOutreachEmailHtml(gymName: string, customNote?: string): string {
+  const brandLogoUrl = 'https://thebeasthunterchallenge.com/logo.png';
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>The Beast Hunter 2026 Invitation</title>
+        <style>
+          body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+          }
+          .wrapper {
+            background-color: #050505;
+            padding: 30px 15px;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #0d0d0d;
+            border: 1px solid #222222;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+          }
+          .header {
+            background: linear-gradient(180deg, #161616 0%, #0d0d0d 100%);
+            padding: 32px 20px 24px;
+            text-align: center;
+            border-bottom: 2px solid #D4AF37;
+          }
+          .logo {
+            max-width: 140px;
+            height: auto;
+            display: block;
+            margin: 0 auto 12px auto;
+          }
+          .tagline {
+            color: #D4AF37;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+          }
+          .body {
+            padding: 32px 28px;
+            color: #e5e5e5;
+            font-size: 15px;
+            line-height: 1.65;
+          }
+          .greeting {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+          }
+          .event-card {
+            background-color: #141414;
+            border: 1px solid #D4AF37;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 24px 0;
+          }
+          .event-title {
+            color: #D4AF37;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            margin: 0 0 14px 0;
+            text-transform: uppercase;
+            text-align: center;
+          }
+          .disciplines-list {
+            text-align: left;
+            background-color: #0a0a0a;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            border: 1px solid #1f1f1f;
+          }
+          .discipline-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 14px;
+          }
+          .discipline-item:last-child {
+            border-bottom: none;
+          }
+          .stats-table {
+            width: 100%;
+            margin: 18px 0 6px;
+            border-collapse: collapse;
+          }
+          .stat-col {
+            width: 50%;
+            padding: 14px 10px;
+            background-color: #121212;
+            border: 1px solid #222;
+            text-align: center;
+          }
+          .stat-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+          }
+          .stat-value {
+            font-size: 18px;
+            color: #D4AF37;
+            font-weight: 800;
+            margin-top: 4px;
+          }
+          .cta-btn {
+            display: block;
+            width: fit-content;
+            margin: 28px auto 10px;
+            background: linear-gradient(135deg, #D4AF37 0%, #F5D060 100%);
+            color: #000000 !important;
+            text-decoration: none !important;
+            font-weight: 900;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
+          }
+          .footer {
+            background-color: #070707;
+            padding: 24px 28px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #1a1a1a;
+          }
+          .footer a {
+            color: #D4AF37;
+            text-decoration: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="wrapper">
+          <div class="container">
+            <div class="header">
+              <img src="${brandLogoUrl}" alt="The Beast Hunter Challenge" class="logo" />
+              <p class="tagline">India's Ultimate Physical Arena</p>
+            </div>
+            <div class="body">
+              <div class="greeting">Dear ${gymName},</div>
+              <p style="margin-top: 0;">Greetings from <strong>The Beast Hunter Challenge</strong>!</p>
+              <p>We are officially inviting <strong>${gymName}</strong> to field your top trainers and athletes at India's premier functional endurance arena:</p>
+              
+              <div class="event-card">
+                <div class="event-title">🏆 THE BEAST HUNTER 2026</div>
+                <div class="disciplines-list">
+                  <div class="discipline-item">🏃 <strong>Running Endurance</strong> <span style="color: #888;">(Stamina &amp; Speed)</span></div>
+                  <div class="discipline-item">🚴 <strong>Cycling Sprint</strong> <span style="color: #888;">(Quad &amp; Cardiovascular Power)</span></div>
+                  <div class="discipline-item">🏋️ <strong>Static Weight Holding</strong> <span style="color: #888;">(Raw Isometric Strength)</span></div>
+                  <div class="discipline-item">💪 <strong>Dumbbell Endurance</strong> <span style="color: #888;">(Grip &amp; Shoulder Stability)</span></div>
+                  <div class="discipline-item">🧘 <strong>Max-Time Core Plank</strong> <span style="color: #888;">(Unbreakable Willpower)</span></div>
+                </div>
+                
+                <table class="stats-table" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td class="stat-col" style="border-radius: 6px 0 0 6px; border-right: 2px solid #000;">
+                      <div class="stat-label">💰 Grand Prize Pool</div>
+                      <div class="stat-value">₹1,00,000 Cash</div>
+                    </td>
+                    <td class="stat-col" style="border-radius: 0 6px 6px 0;">
+                      <div class="stat-label">🎟️ Entry Fee</div>
+                      <div class="stat-value" style="color: #ffffff;">₹1,500</div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <div style="background-color: #121212; border-left: 3px solid #D4AF37; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #D4AF37; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Why Field Athletes from ${gymName}?</p>
+                <ul style="margin: 0; padding-left: 18px; color: #cccccc; font-size: 14px; line-height: 1.6;">
+                  <li style="margin-bottom: 6px;"><strong>Brand Recognition:</strong> Showcase your gym's elite training standard on official media boards and live streams.</li>
+                  <li><strong>Podium Glory:</strong> Put <strong>${gymName}</strong> at the top of the city's fitness leaderboard.</li>
+                </ul>
+              </div>
+
+              ${customNote ? `<div style="background-color: #171717; padding: 14px 18px; border-radius: 6px; font-size: 13px; color: #e0e0e0; border: 1px dashed #D4AF37; margin: 20px 0;">${customNote}</div>` : ''}
+
+              <div style="text-align: center; margin: 30px 0 10px;">
+                <a href="https://thebeasthunterchallenge.com" target="_blank" class="cta-btn">Explore Details &amp; Register Slots &rarr;</a>
+              </div>
+
+              <p style="font-size: 13px; color: #888; text-align: center; margin-top: 15px;">
+                <em>(For gym bulk delegations or group discount codes, reply to this email or WhatsApp us).</em>
+              </p>
+
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #222; font-size: 14px; color: #aaa; line-height: 1.6;">
+                Best regards,<br/>
+                <strong style="color: #fff;">The Beast Hunter Team</strong><br/>
+                📞 Phone / WhatsApp: <a href="tel:+918421787508" style="color: #D4AF37; text-decoration: none;">+91 84217 87508</a><br/>
+                🌐 Website: <a href="https://thebeasthunterchallenge.com" style="color: #D4AF37; text-decoration: none;">thebeasthunterchallenge.com</a>
+              </div>
+            </div>
+            <div class="footer">
+              <p style="margin: 0 0 6px 0;">&copy; ${new Date().getFullYear()} The Beast Hunter Challenge. All Rights Reserved.</p>
+              <p style="margin: 0;">Mira Road 401107 | <a href="mailto:info@thebeasthunterchallenge.com">info@thebeasthunterchallenge.com</a></p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+export async function sendGymOutreachEmail(
+  to: string,
+  gymName: string,
+  subject?: string,
+  customNote?: string
+): Promise<SendMailResult> {
+  const finalSubject = subject || `Official Invitation: Will ${gymName} compete at The Beast Hunter 2026? 🏆`;
+  const htmlContent = getGymOutreachEmailHtml(gymName, customNote);
+  return sendEmail(to, finalSubject, htmlContent);
+}
+
