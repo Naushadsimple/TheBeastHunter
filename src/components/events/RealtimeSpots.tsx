@@ -7,10 +7,6 @@ import { Users, Flame } from 'lucide-react';
 interface RealtimeSpotsProps {
   eventId: string;
   maxParticipants: number;
-  /**
-   * initialCount = displayed_slot_count + actual_registered_count
-   * (combined value passed from server-side page.tsx)
-   */
   initialCount: number;
 }
 
@@ -23,16 +19,12 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
       try {
         const { data: freshEvent, error } = await supabase
           .from('events')
-          .select('displayed_slot_count, actual_registered_count')
+          .select('displayed_slot_count')
           .eq('id', eventId)
           .single();
 
         if (!error && freshEvent) {
-          // Total filled = base displayed boost + real registrations
-          const totalFilled =
-            (freshEvent.displayed_slot_count || 0) +
-            (freshEvent.actual_registered_count || 0);
-          setCount(totalFilled);
+          setCount(freshEvent.displayed_slot_count || 0);
         }
       } catch (err) {
         console.error('Error fetching fresh count:', err);
@@ -54,11 +46,8 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialCount }
         },
         (payload) => {
           const updated = payload.new as any;
-          if (updated) {
-            const totalFilled =
-              (updated.displayed_slot_count || 0) +
-              (updated.actual_registered_count || 0);
-            setCount(totalFilled);
+          if (updated && updated.displayed_slot_count !== undefined) {
+            setCount(updated.displayed_slot_count || 0);
           } else {
             fetchFreshCount();
           }

@@ -37,7 +37,7 @@ export default async function RegisterPage({ params }: PageProps) {
 
   const spotsLeft =
     dbEvent.max_participants != null
-      ? Math.max(0, dbEvent.max_participants - ((dbEvent.displayed_slot_count || 0) + (dbEvent.actual_registered_count || 0)))
+      ? Math.max(0, dbEvent.max_participants - (dbEvent.displayed_slot_count || 0))
       : null;
 
   const registrationClosed =
