@@ -2819,9 +2819,9 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                 />
               </label>
               <div className="bg-gold-premium/10 border border-gold-premium/30 rounded-lg p-3 space-y-1">
-                <p className="text-[11px] text-gold-premium font-barlow font-bold uppercase">Automatic Slot Increment:</p>
+                <p className="text-[11px] text-gold-premium font-barlow font-bold uppercase">Admin-Only Control:</p>
                 <p className="text-[11px] text-gray-400 font-barlow leading-relaxed">
-                  Whatever number you set here is directly shown to users. When an athlete registers and picks their audition activity (e.g. Running), the system automatically adds <strong className="text-white">+1</strong> to this displayed count, <strong className="text-white">+1</strong> to actual registrations, and <strong className="text-white">+1</strong> to that activity's filled slot.
+                  Whatever number you set here is directly shown to users. <strong className="text-white">Registrations never auto-change this value.</strong> Only you (admin) can update slots from this panel.
                 </p>
               </div>
             </div>

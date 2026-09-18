@@ -62,6 +62,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
 
     if (!error && dbEvent) {
       registrationCount = dbEvent.displayed_slot_count || 0;
+      const actualRegistered = dbEvent.actual_registered_count || 0;
       
       const parsedSchedule = typeof dbEvent.schedule === 'string' ? JSON.parse(dbEvent.schedule) : dbEvent.schedule;
       const parsedFaq = typeof dbEvent.faq === 'string' ? JSON.parse(dbEvent.faq) : dbEvent.faq;
@@ -476,7 +477,8 @@ export default async function EventDetailsPage({ params }: PageProps) {
               <RealtimeSpots
                 eventId={event.id}
                 maxParticipants={event.max_participants}
-                initialCount={registrationCount}
+                initialDisplayed={event.displayed_slot_count || 0}
+                initialActualRegistered={event.actual_registered_count || 0}
               />
 
               {/* Booking Card */}

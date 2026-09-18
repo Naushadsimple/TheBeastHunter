@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/admin-auth';
 import { getSiteUrl } from '@/lib/site-url';
-import { releaseAuditionSlot } from '@/lib/slot-sync';
 
 export async function POST(request: Request) {
   const auth = await getAdminSession();
@@ -119,10 +118,6 @@ export async function POST(request: Request) {
         })
         .eq('registration_id', registrationId);
 
-      // --- AUTOMATIC SLOT SYNCHRONIZATION (REJECT) ---
-      if (targetEventId) {
-        await releaseAuditionSlot(db, targetEventId, registration?.audition_option);
-      }
 
       const { sendRejectionEmail } = await import('@/lib/mail');
       const mailResult = await sendRejectionEmail(registration.email, registration, registration.event_id);

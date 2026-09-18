@@ -33,6 +33,8 @@ export interface DBEvent {
   max_participants: number;
   registration_count?: number;
   displayed_slot_count?: number;
+  actual_registered_count?: number;
+  audition_slots?: Record<string, { filled: number; capacity: number }>;
   venue?: string;
   location_badge?: string;
 }
