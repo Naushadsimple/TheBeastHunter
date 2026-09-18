@@ -11,21 +11,19 @@ interface RealtimeSpotsProps {
   initialActualRegistered: number;
 }
 
-export default function RealtimeSpots({ eventId, maxParticipants, initialDisplayed, initialActualRegistered }: RealtimeSpotsProps) {
+export default function RealtimeSpots({ eventId, maxParticipants, initialDisplayed }: RealtimeSpotsProps) {
   const [displayed, setDisplayed] = useState(initialDisplayed);
-  const [actualRegistered, setActualRegistered] = useState(initialActualRegistered);
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchFresh() {
       const { data, error } = await supabase
         .from('events')
-        .select('displayed_slot_count, actual_registered_count')
+        .select('displayed_slot_count')
         .eq('id', eventId)
         .single();
       if (!error && data) {
         setDisplayed(data.displayed_slot_count || 0);
-        setActualRegistered(data.actual_registered_count || 0);
       }
     }
     fetchFresh();
@@ -34,19 +32,19 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialDisplay
       .channel(`spots-sync-${eventId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: `id=eq.${eventId}` }, (payload) => {
         const u = payload.new as any;
-        if (u) {
-          if (u.displayed_slot_count !== undefined) setDisplayed(u.displayed_slot_count || 0);
-          if (u.actual_registered_count !== undefined) setActualRegistered(u.actual_registered_count || 0);
-        } else { fetchFresh(); }
+        if (u && u.displayed_slot_count !== undefined) {
+          setDisplayed(u.displayed_slot_count || 0);
+        } else {
+          fetchFresh();
+        }
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [eventId, supabase]);
 
-  // Available = total capacity minus admin-set displayed (filled) count
+  // Available = max capacity minus admin-set displayed (filled) slots
   const available = Math.max(0, maxParticipants - displayed);
-  // Progress bar driven by admin-set displayed_slot_count
   const filledPercent = Math.min(100, Math.round((displayed / maxParticipants) * 100));
 
   return (
