@@ -286,7 +286,27 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
       }
 
       const orderData = await createRes.json();
-      if (!createRes.ok || !orderData.razorpayOrderId) {
+      if (!createRes.ok) {
+        throw new Error(orderData.message || 'Failed to create payment order');
+      }
+
+      // Handle 100% Free Pass Coupon (No Razorpay payment required)
+      if (orderData.freeOrder || orderData.payableAmount === 0 || orderData.amount === 0) {
+        setSubmitLoading(true);
+        try {
+          await fetch('/api/send-pass-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationId: orderData.registrationId }),
+          });
+        } catch (mailErr) {
+          console.error('Failed to trigger pass email delivery:', mailErr);
+        }
+        router.push(`/payment/success?registration_id=${orderData.registrationId}`);
+        return;
+      }
+
+      if (!orderData.razorpayOrderId) {
         throw new Error(orderData.message || 'Failed to create payment order');
       }
 
@@ -977,6 +997,11 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Processing Checkout...</span>
+                </>
+              ) : appliedCoupon && appliedCoupon.finalAmount === 0 ? (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>Claim Free Entry & Complete Registration</span>
                 </>
               ) : (
                 <>
