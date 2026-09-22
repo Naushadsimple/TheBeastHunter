@@ -42,7 +42,9 @@ export default async function EventsPage({ searchParams }: PageProps) {
         ticket_price,
         max_participants,
         status,
-        displayed_slot_count
+        displayed_slot_count,
+        postponed_from,
+        postponement_reason
       `)
       .order('event_date', { ascending: true });
 
@@ -85,7 +87,9 @@ export default async function EventsPage({ searchParams }: PageProps) {
     slug: 'beast-hunter-audition-2026',
     short_description: 'Choose your audition strength: Running, Cycling, Weight Holding, Dumbbell Holding, or Plank. Top 100 move to the brutal Final Obstacle Knockout!',
     banner_url: '/images/events/audition_options.jpg',
-    event_date: '2026-11-15T06:00:00Z',
+    event_date: '2026-11-01T06:00:00Z',
+    postponed_from: '27 September 2026',
+    postponement_reason: 'Postponed due to weather conditions',
     distance_km: 10,
     difficulty: 'intermediate',
     ticket_price: 1500,

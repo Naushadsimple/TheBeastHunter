@@ -33,7 +33,9 @@ export default async function Home() {
         ticket_price,
         max_participants,
         status,
-        displayed_slot_count
+        displayed_slot_count,
+        postponed_from,
+        postponement_reason
       `)
       .eq('status', 'published')
       .order('event_date', { ascending: true })

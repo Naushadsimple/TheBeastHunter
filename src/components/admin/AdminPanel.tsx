@@ -174,6 +174,10 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     Plank: 0,
   });
 
+  // Show Numbers / Slot Display Toggle State
+  const [showNumbers, setShowNumbers] = useState<boolean>(true);
+  const [showNumbersSaving, setShowNumbersSaving] = useState<boolean>(false);
+
   // Coupons Management State
   const [coupons, setCoupons] = useState<any[]>([]);
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -231,6 +235,41 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     }
   }, []);
 
+  const loadShowNumbers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings/slot-display');
+      if (res.ok) {
+        const data = await res.json();
+        setShowNumbers(typeof data.show_numbers === 'boolean' ? data.show_numbers : true);
+      }
+    } catch (err) {
+      console.error('Error loading slot display setting:', err);
+    }
+  }, []);
+
+  const handleToggleShowNumbers = async () => {
+    const nextVal = !showNumbers;
+    setShowNumbers(nextVal);
+    setShowNumbersSaving(true);
+    try {
+      const res = await fetch('/api/settings/slot-display', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ show_numbers: nextVal }),
+      });
+      if (!res.ok) throw new Error('Failed to update setting');
+      setMessage({
+        type: 'success',
+        text: `Slot numbers display is now ${nextVal ? 'ON (Visible to users)' : 'OFF (Hidden from users)'}!`,
+      });
+    } catch (err: any) {
+      setShowNumbers(!nextVal);
+      setMessage({ type: 'error', text: err?.message || 'Failed to update setting' });
+    } finally {
+      setShowNumbersSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'coupons') {
       loadCoupons();
@@ -238,7 +277,10 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     if (activeTab === 'popup') {
       loadPopupSettings();
     }
-  }, [activeTab, loadCoupons, loadPopupSettings]);
+    if (activeTab === 'slots') {
+      loadShowNumbers();
+    }
+  }, [activeTab, loadCoupons, loadPopupSettings, loadShowNumbers]);
 
   const handleSavePopupSettings = async () => {
     setPopupSaving(true);
@@ -1627,6 +1669,53 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
             <p className="text-xs text-gray-500 font-barlow uppercase tracking-wider mt-1">
               Override displayed slot counts shown to users on event details and cards
             </p>
+          </div>
+
+          {/* Show Numbers Toggle Feature */}
+          <div className="bg-gradient-to-r from-dark-gray/80 via-black/60 to-dark-gray/80 border border-gold-premium/30 p-5 rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.08)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <span className="font-bebas text-xl text-white uppercase tracking-wide">
+                  Show Numbers (Slot Counts & Remaining Badges)
+                </span>
+                <span className={`text-[10px] font-barlow font-bold uppercase px-2.5 py-0.5 rounded-full border ${
+                  showNumbers
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : 'bg-red-500/10 text-red-400 border-red-500/30'
+                }`}>
+                  {showNumbers ? '● Numbers ON (Visible)' : '○ Numbers OFF (Hidden)'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 font-barlow leading-relaxed">
+                When turned <strong className="text-white">OFF</strong>, all audition slot counts, filled/remaining numbers, progress bars, and spots left badges are completely removed from the registration form and public pages. When <strong className="text-white">ON</strong>, all numbers are displayed normally.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={handleToggleShowNumbers}
+                disabled={showNumbersSaving}
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none ${
+                  showNumbers ? 'bg-gold-premium' : 'bg-white/20'
+                } disabled:opacity-50`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-black transition-transform ${
+                    showNumbers ? 'translate-x-9' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="font-barlow text-xs font-bold text-white uppercase tracking-wider min-w-[60px]">
+                {showNumbersSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gold-premium" />
+                ) : showNumbers ? (
+                  <span className="text-emerald-400">ENABLED</span>
+                ) : (
+                  <span className="text-red-400">DISABLED</span>
+                )}
+              </span>
+            </div>
           </div>
 
           <div className="bg-dark-gray/40 border border-white/10 rounded-xl overflow-hidden">

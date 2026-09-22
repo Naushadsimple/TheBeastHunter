@@ -37,6 +37,8 @@ export interface DBEvent {
   audition_slots?: Record<string, { filled: number; capacity: number }>;
   venue?: string;
   location_badge?: string;
+  postponed_from?: string;
+  postponement_reason?: string;
 }
 
 interface UpcomingRacesProps {
@@ -301,17 +303,37 @@ export default function UpcomingRaces({ events }: UpcomingRacesProps) {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 border-y border-white/10 py-4 font-barlow text-xs uppercase tracking-wider text-gray-300">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gold-premium" />
-                      <span>
-                        {activeEvent.event_date
-                          ? new Date(activeEvent.event_date).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : '27 Sep 2026'}
-                      </span>
+                    <div className="col-span-2 sm:col-span-1 flex flex-wrap items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gold-premium shrink-0" />
+                      {activeEvent.postponed_from ? (
+                        <>
+                          <span className="line-through text-gray-500 opacity-70">
+                            {activeEvent.postponed_from}
+                          </span>
+                          <span className="text-gold-premium font-bold">
+                            {activeEvent.event_date
+                              ? new Date(activeEvent.event_date).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })
+                              : '01 Nov 2026'}
+                          </span>
+                          <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30">
+                            {activeEvent.postponement_reason || 'Postponed (Weather)'}
+                          </span>
+                        </>
+                      ) : (
+                        <span>
+                          {activeEvent.event_date
+                            ? new Date(activeEvent.event_date).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : '01 Nov 2026'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin className="w-4 h-4 text-gold-premium" />

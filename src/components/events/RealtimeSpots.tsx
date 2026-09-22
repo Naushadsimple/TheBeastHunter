@@ -8,11 +8,18 @@ interface RealtimeSpotsProps {
   eventId: string;
   maxParticipants: number;
   initialDisplayed: number;
-  initialActualRegistered: number;
+  initialActualRegistered?: number;
+  showNumbers?: boolean;
 }
 
-export default function RealtimeSpots({ eventId, maxParticipants, initialDisplayed }: RealtimeSpotsProps) {
+export default function RealtimeSpots({
+  eventId,
+  maxParticipants,
+  initialDisplayed,
+  showNumbers: initialShowNumbers,
+}: RealtimeSpotsProps) {
   const [displayed, setDisplayed] = useState(initialDisplayed);
+  const [showNumbers, setShowNumbers] = useState<boolean>(initialShowNumbers ?? true);
   const supabase = createClient();
 
   useEffect(() => {
@@ -28,6 +35,21 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialDisplay
     }
     fetchFresh();
 
+    async function fetchShowNumbers() {
+      try {
+        const res = await fetch('/api/settings/slot-display');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.show_numbers === 'boolean') {
+            setShowNumbers(data.show_numbers);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching slot display in RealtimeSpots:', e);
+      }
+    }
+    fetchShowNumbers();
+
     const channel = supabase
       .channel(`spots-sync-${eventId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: `id=eq.${eventId}` }, (payload) => {
@@ -42,6 +64,11 @@ export default function RealtimeSpots({ eventId, maxParticipants, initialDisplay
 
     return () => { supabase.removeChannel(channel); };
   }, [eventId, supabase]);
+
+  // If Admin toggles Show Numbers OFF, completely remove this widget from the public page
+  if (!showNumbers) {
+    return null;
+  }
 
   // Available = max capacity minus admin-set displayed (filled) slots
   const available = Math.max(0, maxParticipants - displayed);

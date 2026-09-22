@@ -30,6 +30,19 @@ export default async function RegisterPage({ params }: PageProps) {
     notFound();
   }
 
+  const { data: slotSetting } = await supabase
+    .from('site_settings')
+    .select('show_numbers, value')
+    .eq('key', 'slot_display')
+    .maybeSingle();
+
+  const showNumbers =
+    typeof slotSetting?.show_numbers === 'boolean'
+      ? slotSetting.show_numbers
+      : slotSetting?.value?.show_numbers !== undefined
+      ? Boolean(slotSetting.value.show_numbers)
+      : true;
+
   const event: DBEvent = {
     ...dbEvent,
     distance_km: Number(dbEvent.distance_km),
@@ -82,17 +95,31 @@ export default async function RegisterPage({ params }: PageProps) {
           </div>
 
           <div className="flex flex-wrap justify-center gap-4 mb-8 text-sm font-inter text-gray-300">
-            <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
-              <Calendar className="w-4 h-4 text-gold-premium" />
-              {formattedDate}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 bg-dark-gray/40 border border-amber-500/30 px-3.5 py-1.5 rounded text-xs font-barlow">
+              <Calendar className="w-4 h-4 text-gold-premium shrink-0" />
+              {dbEvent.postponed_from ? (
+                <>
+                  <span className="line-through text-gray-500 opacity-70">
+                    {dbEvent.postponed_from}
+                  </span>
+                  <span className="text-gold-premium font-bold">
+                    {formattedDate}
+                  </span>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold uppercase border border-amber-500/30">
+                    {dbEvent.postponement_reason || 'Postponed due to weather conditions'}
+                  </span>
+                </>
+              ) : (
+                <span>{formattedDate}</span>
+              )}
+            </div>
             {dbEvent.city && (
               <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
                 <MapPin className="w-4 h-4 text-gold-premium" />
                 {dbEvent.city}
               </span>
             )}
-            {spotsLeft !== null && (
+            {showNumbers && spotsLeft !== null && (
               <span className="flex items-center gap-2 bg-dark-gray/40 border border-white/5 px-3 py-1.5 rounded">
                 <span className="text-gold-premium font-bold">{spotsLeft}</span> slots left
               </span>
@@ -124,7 +151,7 @@ export default async function RegisterPage({ params }: PageProps) {
               </Link>
             </div>
           ) : (
-            <RegistrationForm event={event} user={optionalUser} />
+            <RegistrationForm event={event} user={optionalUser} showNumbers={showNumbers} />
           )}
         </div>
       </main>

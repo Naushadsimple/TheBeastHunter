@@ -34,6 +34,7 @@ interface RegistrationFormProps {
     email: string;
     name?: string;
   } | null;
+  showNumbers?: boolean;
 }
 
 const TOTAL_STEPS = 4;
@@ -92,11 +93,29 @@ declare global {
   }
 }
 
-export default function RegistrationForm({ event, user }: RegistrationFormProps) {
+export default function RegistrationForm({ event, user, showNumbers: initialShowNumbers }: RegistrationFormProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showNumbers, setShowNumbers] = useState<boolean>(initialShowNumbers ?? true);
+
+  useEffect(() => {
+    async function fetchShowNumbers() {
+      try {
+        const res = await fetch('/api/settings/slot-display');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.show_numbers === 'boolean') {
+            setShowNumbers(data.show_numbers);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching slot display setting:', e);
+      }
+    }
+    fetchShowNumbers();
+  }, []);
 
   const [formData, setFormData] = useState({
     fullName: user?.name || '',
@@ -663,7 +682,9 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
               Step 2: Choose Your Audition Option & Safety Waiver
             </h3>
             <p className="text-gray-400 text-xs font-barlow uppercase tracking-widest mt-1">
-              Select 1 audition strength activity. 100 contestants per activity → Top 20 advance to Top 100 Final Knockout!
+              {showNumbers
+                ? 'Select 1 audition strength activity. 100 contestants per activity → Top 20 advance to Top 100 Final Knockout!'
+                : 'Select 1 audition strength activity. Top 20 advance to Top 100 Final Knockout!'}
             </p>
           </div>
 
@@ -702,31 +723,37 @@ export default function RegistrationForm({ event, user }: RegistrationFormProps)
                       <div className="p-2.5 rounded-lg bg-black/40 border border-white/10">
                         <IconComp className={`w-6 h-6 ${isSelected ? 'text-gold-premium' : 'text-gray-300'}`} />
                       </div>
-                      <span className={`text-[10px] font-barlow font-bold uppercase px-2 py-0.5 rounded border ${
-                        isSoldOut
-                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                          : 'bg-gold-premium/10 text-gold-premium border-gold-premium/30'
-                      }`}>
-                        {isSoldOut ? 'SOLD OUT' : `${remaining} Spots Left`}
-                      </span>
+                      {showNumbers && (
+                        <span className={`text-[10px] font-barlow font-bold uppercase px-2 py-0.5 rounded border ${
+                          isSoldOut
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : 'bg-gold-premium/10 text-gold-premium border-gold-premium/30'
+                        }`}>
+                          {isSoldOut ? 'SOLD OUT' : `${remaining} Spots Left`}
+                        </span>
+                      )}
                     </div>
 
                     <h4 className="font-bebas text-lg text-white uppercase tracking-wide">{opt.name}</h4>
-                    <p className="text-xs text-gray-400 font-barlow mt-1 uppercase tracking-wider">{opt.description}</p>
+                    <p className="text-xs text-gray-400 font-barlow mt-1 uppercase tracking-wider">
+                      {showNumbers ? opt.description : 'Top 20 Advance to Final Knockout'}
+                    </p>
                     
-                    {/* Filled vs Remaining slot progress bar */}
-                    <div className="mt-3 pt-2 border-t border-white/5 space-y-1.5 font-barlow">
-                      <div className="flex justify-between items-center text-[11px] uppercase font-bold">
-                        <span className="text-gray-400">Filled: <span className="text-white">{filled} / {capacity}</span></span>
-                        <span className="text-gold-premium">{remaining} Remaining</span>
+                    {/* Filled vs Remaining slot progress bar (Only when Show Numbers is ON) */}
+                    {showNumbers && (
+                      <div className="mt-3 pt-2 border-t border-white/5 space-y-1.5 font-barlow">
+                        <div className="flex justify-between items-center text-[11px] uppercase font-bold">
+                          <span className="text-gray-400">Filled: <span className="text-white">{filled} / {capacity}</span></span>
+                          <span className="text-gold-premium">{remaining} Remaining</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-gold-premium to-amber-400 h-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-gold-premium to-amber-400 h-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, (filled / capacity) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
+                    )}
 
                     {isSelected && (
                       <div className="mt-3 flex items-center text-xs font-barlow font-bold text-gold-premium uppercase tracking-widest">

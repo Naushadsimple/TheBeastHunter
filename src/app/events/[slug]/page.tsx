@@ -49,9 +49,26 @@ export default async function EventDetailsPage({ params }: PageProps) {
 
   let event: DetailedEvent | null = null;
   let registrationCount = 0;
+  let showNumbers = true;
 
   try {
     const supabase = await createClient();
+
+    // Fetch slot display setting from site_settings
+    const { data: slotSetting } = await supabase
+      .from('site_settings')
+      .select('show_numbers, value')
+      .eq('key', 'slot_display')
+      .maybeSingle();
+
+    if (slotSetting) {
+      showNumbers =
+        typeof slotSetting.show_numbers === 'boolean'
+          ? slotSetting.show_numbers
+          : slotSetting.value?.show_numbers !== undefined
+          ? Boolean(slotSetting.value.show_numbers)
+          : true;
+    }
 
     // Fetch event from database
     const { data: dbEvent, error } = await supabase
@@ -122,7 +139,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-deep-black via-transparent to-transparent" />
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-8 z-10">
-            <div className="flex flex-wrap gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
               <span className="bg-black/60 backdrop-blur-sm border border-white/10 px-3 py-1 rounded font-bebas text-lg tracking-wide text-white flex items-center space-x-1">
                 <Route className="w-4 h-4 text-gold-premium" />
                 <span>{event.distance_km} KM</span>
@@ -130,6 +147,24 @@ export default async function EventDetailsPage({ params }: PageProps) {
               <span className={`border px-3 py-1 rounded font-barlow text-xs font-bold uppercase tracking-wider ${difficultyColors[event.difficulty]}`}>
                 {event.difficulty}
               </span>
+              <div className="bg-black/80 backdrop-blur-md border border-amber-500/40 px-3 py-1 rounded flex flex-wrap items-center gap-2 text-xs font-barlow">
+                <Calendar className="w-4 h-4 text-gold-premium shrink-0" />
+                {event.postponed_from ? (
+                  <>
+                    <span className="line-through text-gray-500 opacity-70">
+                      {event.postponed_from}
+                    </span>
+                    <span className="text-gold-premium font-bold tracking-wide uppercase">
+                      {formattedDate}
+                    </span>
+                    <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-amber-500/30">
+                      {event.postponement_reason || 'Postponed due to weather conditions'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-white font-bold">{formattedDate}</span>
+                )}
+              </div>
             </div>
             <h1 className="font-bebas text-4xl sm:text-6xl md:text-7xl text-white tracking-wide uppercase leading-tight">
               {event.title}
@@ -479,6 +514,7 @@ export default async function EventDetailsPage({ params }: PageProps) {
                 maxParticipants={event.max_participants}
                 initialDisplayed={event.displayed_slot_count || 0}
                 initialActualRegistered={event.actual_registered_count || 0}
+                showNumbers={showNumbers}
               />
 
               {/* Booking Card */}
@@ -488,6 +524,31 @@ export default async function EventDetailsPage({ params }: PageProps) {
                   <div className="flex items-baseline space-x-1 text-white">
                     <span className="font-bebas text-5xl tracking-wide">₹{event.ticket_price}</span>
                   </div>
+                </div>
+
+                {/* Event Date & Postponement Notice */}
+                <div className="bg-black/60 border border-amber-500/30 p-3.5 rounded-lg space-y-1 text-xs font-barlow">
+                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gold-premium" />
+                    <span>Event Date</span>
+                  </div>
+                  <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+                    {event.postponed_from && (
+                      <span className="line-through text-gray-500 font-semibold">
+                        {event.postponed_from}
+                      </span>
+                    )}
+                    <span className="text-gold-premium font-bold text-sm">
+                      {formattedDate}
+                    </span>
+                  </div>
+                  {event.postponement_reason && (
+                    <div className="pt-1">
+                      <span className="inline-block text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold uppercase border border-amber-500/30">
+                        {event.postponement_reason}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3">
