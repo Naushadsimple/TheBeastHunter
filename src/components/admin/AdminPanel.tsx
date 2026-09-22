@@ -166,12 +166,14 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
 
   const [showAuditionSlotsModal, setShowAuditionSlotsModal] = useState(false);
   const [selectedEventForAuditionSlots, setSelectedEventForAuditionSlots] = useState<any | null>(null);
-  const [auditionSlotsForm, setAuditionSlotsForm] = useState({
-    Running: 0,
-    Cycling: 0,
-    'Weight Holding': 0,
-    'Dumbbell Holding': 0,
-    Plank: 0,
+  const [auditionSlotsForm, setAuditionSlotsForm] = useState<
+    Record<string, { filled: number; capacity: number }>
+  >({
+    Running: { filled: 83, capacity: 100 },
+    Cycling: { filled: 61, capacity: 100 },
+    'Weight Holding': { filled: 74, capacity: 100 },
+    'Dumbbell Holding': { filled: 69, capacity: 100 },
+    Plank: { filled: 63, capacity: 100 },
   });
 
   // Show Numbers / Slot Display Toggle State
@@ -383,11 +385,26 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     setSelectedEventForAuditionSlots(eventObj);
     const existing = eventObj.audition_slots || {};
     setAuditionSlotsForm({
-      Running: existing['Running']?.filled ?? 0,
-      Cycling: existing['Cycling']?.filled ?? 0,
-      'Weight Holding': existing['Weight Holding']?.filled ?? 0,
-      'Dumbbell Holding': existing['Dumbbell Holding']?.filled ?? 0,
-      Plank: existing['Plank']?.filled ?? 0,
+      Running: {
+        capacity: existing['Running']?.capacity ?? 100,
+        filled: existing['Running']?.filled ?? 0,
+      },
+      Cycling: {
+        capacity: existing['Cycling']?.capacity ?? 100,
+        filled: existing['Cycling']?.filled ?? 0,
+      },
+      'Weight Holding': {
+        capacity: existing['Weight Holding']?.capacity ?? 100,
+        filled: existing['Weight Holding']?.filled ?? 0,
+      },
+      'Dumbbell Holding': {
+        capacity: existing['Dumbbell Holding']?.capacity ?? 100,
+        filled: existing['Dumbbell Holding']?.filled ?? 0,
+      },
+      Plank: {
+        capacity: existing['Plank']?.capacity ?? 100,
+        filled: existing['Plank']?.filled ?? 0,
+      },
     });
     setShowAuditionSlotsModal(true);
   };
@@ -396,24 +413,26 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
     e.preventDefault();
     if (!selectedEventForAuditionSlots) return;
 
-    const newSlotsObj = {
-      Running: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Running) || 0) },
-      Cycling: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Cycling) || 0) },
-      'Weight Holding': { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm['Weight Holding']) || 0) },
-      'Dumbbell Holding': { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm['Dumbbell Holding']) || 0) },
-      Plank: { capacity: 100, filled: Math.max(0, Number(auditionSlotsForm.Plank) || 0) },
-    };
-
     setUpdatingSlots(true);
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({ audition_slots: newSlotsObj })
-        .eq('id', selectedEventForAuditionSlots.id);
+      const res = await fetch('/api/admin/events/update-slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: selectedEventForAuditionSlots.id,
+          audition_slots: auditionSlotsForm,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update audition slots');
+      }
 
-      setMessage({ type: 'success', text: `Audition activity slot counts updated successfully!` });
+      setMessage({
+        type: 'success',
+        text: `Audition activity slots updated successfully! Total filled: ${data.totalFilled} / ${data.totalCapacity}`,
+      });
       setShowAuditionSlotsModal(false);
       setSelectedEventForAuditionSlots(null);
       await loadDashboard();
@@ -437,12 +456,19 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
 
     setUpdatingSlots(true);
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({ displayed_slot_count: newSlots })
-        .eq('id', selectedEventForSlots.id);
+      const res = await fetch('/api/admin/events/update-slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: selectedEventForSlots.id,
+          displayed_slot_count: newSlots,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to update slots');
+      }
 
       setMessage({ type: 'success', text: `Slots override updated successfully for ${selectedEventForSlots.title}!` });
       setShowSlotsModal(false);
@@ -1079,6 +1105,16 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                   >
                     View
                   </Link>
+                  {ev.audition_slots && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAuditionSlotsModal(ev)}
+                      className="px-3 py-1.5 text-xs bg-gold-premium/10 text-gold-premium rounded border border-gold-premium/30 hover:bg-gold-premium/20 flex items-center justify-center gap-1 font-bold"
+                    >
+                      <Sliders className="w-3 h-3" />
+                      Slots
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDeleteEvent(ev.id)}
@@ -1755,18 +1791,30 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                           {event.max_participants || 'Unlimited'}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedEventForSlots(event);
-                              setOverrideSlotsValue(String(event.displayed_slot_count || 0));
-                              setShowSlotsModal(true);
-                            }}
-                            className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-1.5 rounded transition-all active:scale-95 inline-flex items-center gap-1.5"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            Edit Slots
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {event.audition_slots && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAuditionSlotsModal(event)}
+                                className="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-xs font-bold uppercase px-3 py-1.5 rounded transition-all active:scale-95 inline-flex items-center gap-1.5"
+                              >
+                                <Sliders className="w-3.5 h-3.5" />
+                                Audition Slots
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedEventForSlots(event);
+                                setOverrideSlotsValue(String(event.displayed_slot_count || 0));
+                                setShowSlotsModal(true);
+                              }}
+                              className="bg-gold-premium/10 border border-gold-premium/30 hover:bg-gold-premium/20 text-gold-premium text-xs font-bold uppercase px-3 py-1.5 rounded transition-all active:scale-95 inline-flex items-center gap-1.5"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                              Edit Slots
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1824,7 +1872,7 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
                     { name: 'Plank', icon: '⏱️' },
                   ].map((act) => {
                     const filled = evSlots[act.name]?.filled ?? 0;
-                    const capacity = 100;
+                    const capacity = evSlots[act.name]?.capacity ?? 100;
                     const remaining = Math.max(0, capacity - filled);
                     return (
                       <div key={act.name} className="bg-dark-gray/60 border border-white/10 p-3.5 rounded-xl space-y-2">
@@ -2789,85 +2837,196 @@ export default function AdminPanel({ accessDenied }: { accessDenied: boolean }) 
       )}
 
       {/* Edit Audition Activity Slots Modal */}
-      {showAuditionSlotsModal && selectedEventForAuditionSlots && (
-        <Modal
-          title={`Edit Audition Activity Slots (100 Capacity Each)`}
-          onClose={() => {
-            setShowAuditionSlotsModal(false);
-            setSelectedEventForAuditionSlots(null);
-          }}
-        >
-          <form onSubmit={handleUpdateAuditionSlots} className="space-y-5">
-            <p className="text-xs text-gray-400 font-barlow uppercase tracking-wider leading-relaxed">
-              Set the filled slot count for each audition discipline (0 to 100). Remaining spots = 100 minus Filled slots.
-            </p>
+      {showAuditionSlotsModal && selectedEventForAuditionSlots && (() => {
+        const disciplines = [
+          { id: 'Running', label: 'Running Audition', icon: '🏃' },
+          { id: 'Cycling', label: 'Cycling Audition', icon: '🚴' },
+          { id: 'Weight Holding', label: 'Weight Holding Audition', icon: '🏋️' },
+          { id: 'Dumbbell Holding', label: 'Dumbbell Holding Audition', icon: '💪' },
+          { id: 'Plank', label: 'Plank Challenge Audition', icon: '⏱️' },
+        ];
 
-            <div className="space-y-4">
-              {[
-                { id: 'Running', label: 'Running Audition', icon: '🏃' },
-                { id: 'Cycling', label: 'Cycling Audition', icon: '🚴' },
-                { id: 'Weight Holding', label: 'Weight Holding Audition', icon: '🏋️' },
-                { id: 'Dumbbell Holding', label: 'Dumbbell Holding Audition', icon: '💪' },
-                { id: 'Plank', label: 'Plank Challenge Audition', icon: '⏱️' },
-              ].map((item) => {
-                const filledVal = (auditionSlotsForm as any)[item.id] ?? 0;
-                const rem = Math.max(0, 100 - Number(filledVal));
-                return (
-                  <div key={item.id} className="bg-black/50 border border-white/10 p-3.5 rounded-lg space-y-2 font-barlow">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-white uppercase">{item.icon} {item.label}</span>
-                      <span className="text-gold-premium font-bold uppercase">{rem} Spots Remaining</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <label className="text-xs text-gray-400 uppercase font-bold shrink-0">Filled Slots:</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={filledVal}
-                        onChange={(e) =>
-                          setAuditionSlotsForm((prev) => ({
-                            ...prev,
-                            [item.id]: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)),
-                          }))
-                        }
-                        className="w-full bg-black border border-white/10 rounded px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        const totalCapacity = disciplines.reduce((sum, item) => sum + (auditionSlotsForm[item.id]?.capacity ?? 100), 0);
+        const totalFilled = disciplines.reduce((sum, item) => sum + (auditionSlotsForm[item.id]?.filled ?? 0), 0);
+        const totalRemaining = Math.max(0, totalCapacity - totalFilled);
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-white/10 font-barlow">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAuditionSlotsModal(false);
-                  setSelectedEventForAuditionSlots(null);
-                }}
-                className="px-4 py-2 text-xs text-gray-400 uppercase hover:text-white transition-colors font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={updatingSlots}
-                className="px-6 py-2.5 gold-gradient-bg text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {updatingSlots ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <span>Save Audition Slots</span>
-                )}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+        return (
+          <Modal
+            title={`Edit Audition Activity Slots & Registrations`}
+            onClose={() => {
+              setShowAuditionSlotsModal(false);
+              setSelectedEventForAuditionSlots(null);
+            }}
+          >
+            <form onSubmit={handleUpdateAuditionSlots} className="space-y-5">
+              <p className="text-xs text-gray-400 font-barlow uppercase tracking-wider leading-relaxed">
+                Change the capacity, filled registrations, or remaining spots for each audition activity.
+                Updating filled or remaining slots will auto-calculate each other and keep the total displayed slots in 100% sync.
+              </p>
+
+              <div className="space-y-3.5 max-h-[55vh] overflow-y-auto pr-1">
+                {disciplines.map((item) => {
+                  const currentObj = auditionSlotsForm[item.id] || { capacity: 100, filled: 0 };
+                  const cap = currentObj.capacity ?? 100;
+                  const filled = currentObj.filled ?? 0;
+                  const rem = Math.max(0, cap - filled);
+                  const isSoldOut = rem <= 0;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-black/50 border border-white/10 hover:border-gold-premium/40 transition-colors p-4 rounded-xl space-y-3 font-barlow"
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-white uppercase text-sm flex items-center gap-1.5">
+                          <span>{item.icon}</span>
+                          <span>{item.label}</span>
+                        </span>
+                        <span
+                          className={`text-[11px] font-bold uppercase px-2.5 py-0.5 rounded border ${
+                            isSoldOut
+                              ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                              : 'bg-gold-premium/10 text-gold-premium border-gold-premium/30'
+                          }`}
+                        >
+                          {isSoldOut ? 'SOLD OUT' : `${rem} SPOTS REMAINING`}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 pt-1">
+                        {/* Capacity */}
+                        <div>
+                          <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">
+                            Capacity:
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={cap}
+                            onChange={(e) => {
+                              const newCap = Math.max(1, parseInt(e.target.value, 10) || 1);
+                              setAuditionSlotsForm((prev) => ({
+                                ...prev,
+                                [item.id]: {
+                                  capacity: newCap,
+                                  filled: Math.min(newCap, prev[item.id]?.filled ?? 0),
+                                },
+                              }));
+                            }}
+                            className="w-full bg-black/80 border border-white/10 rounded px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-gold-premium"
+                          />
+                        </div>
+
+                        {/* Filled Slots */}
+                        <div>
+                          <label className="block text-[10px] text-amber-400 uppercase font-bold mb-1">
+                            Filled (Regs):
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={cap}
+                            value={filled}
+                            onChange={(e) => {
+                              const newFilled = Math.max(0, Math.min(cap, parseInt(e.target.value, 10) || 0));
+                              setAuditionSlotsForm((prev) => ({
+                                ...prev,
+                                [item.id]: {
+                                  capacity: cap,
+                                  filled: newFilled,
+                                },
+                              }));
+                            }}
+                            className="w-full bg-black/80 border border-amber-500/40 rounded px-3 py-1.5 text-amber-300 font-mono text-sm font-bold focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+
+                        {/* Remaining Slots */}
+                        <div>
+                          <label className="block text-[10px] text-gold-premium uppercase font-bold mb-1">
+                            Remaining:
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max={cap}
+                            value={rem}
+                            onChange={(e) => {
+                              const newRem = Math.max(0, Math.min(cap, parseInt(e.target.value, 10) || 0));
+                              const newFilled = Math.max(0, cap - newRem);
+                              setAuditionSlotsForm((prev) => ({
+                                ...prev,
+                                [item.id]: {
+                                  capacity: cap,
+                                  filled: newFilled,
+                                },
+                              }));
+                            }}
+                            className="w-full bg-black/80 border border-gold-premium/40 rounded px-3 py-1.5 text-gold-premium font-mono text-sm font-bold focus:outline-none focus:border-gold-glow"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mini Progress Bar */}
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-amber-400 to-gold-premium h-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, Math.round((filled / cap) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total Calculation Summary Bar */}
+              <div className="bg-gradient-to-r from-gold-premium/15 via-black to-gold-premium/15 border border-gold-premium/30 p-3.5 rounded-xl flex items-center justify-between font-barlow text-center">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Total Capacity</span>
+                  <span className="font-bebas text-2xl text-white tracking-wide">{totalCapacity}</span>
+                </div>
+                <div className="h-8 w-px bg-white/10" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider block">Total Filled (User Sees)</span>
+                  <span className="font-bebas text-2xl text-amber-400 tracking-wide">{totalFilled}</span>
+                </div>
+                <div className="h-8 w-px bg-white/10" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gold-premium tracking-wider block">Total Remaining</span>
+                  <span className="font-bebas text-2xl text-gold-premium tracking-wide">{totalRemaining}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-white/10 font-barlow">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAuditionSlotsModal(false);
+                    setSelectedEventForAuditionSlots(null);
+                  }}
+                  className="px-4 py-2 text-xs text-gray-400 uppercase hover:text-white transition-colors font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingSlots}
+                  className="px-6 py-2.5 gold-gradient-bg text-black text-xs font-black uppercase rounded hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {updatingSlots ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Syncing & Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save & Sync All Slots</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </Modal>
+        );
+      })()}
       {showSlotsModal && selectedEventForSlots && (
         <Modal title={`Manage Slots: ${selectedEventForSlots.title}`} onClose={() => { setShowSlotsModal(false); setSelectedEventForSlots(null); }}>
           <form onSubmit={handleUpdateSlots} className="space-y-4">

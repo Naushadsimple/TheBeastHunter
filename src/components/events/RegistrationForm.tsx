@@ -698,8 +698,8 @@ export default function RegistrationForm({ event, user, showNumbers: initialShow
                 const IconComp = opt.icon;
                 const isSelected = formData.auditionOption === opt.id;
                 const evSlots = (event as any)?.audition_slots || {};
+                const capacity = evSlots[opt.id]?.capacity ?? 100;
                 const filled = evSlots[opt.id]?.filled ?? 0;
-                const capacity = 100;
                 const remaining = Math.max(0, capacity - filled);
                 const isSoldOut = remaining <= 0;
 

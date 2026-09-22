@@ -204,53 +204,54 @@ export default async function EventDetailsPage({ params }: PageProps) {
                 </div>
 
                 {/* Audition Activity Table */}
-                <div className="overflow-x-auto border border-white/10 rounded-xl">
-                  <table className="w-full text-sm text-left font-barlow">
-                    <thead className="bg-black/50 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-white/10">
-                      <tr>
-                        <th className="px-5 py-3">Audition Option</th>
-                        <th className="px-5 py-3 text-center">Capacity</th>
-                        <th className="px-5 py-3 text-center">Slots Filled</th>
-                        <th className="px-5 py-3 text-center">Remaining</th>
-                        <th className="px-5 py-3 text-center">Qualifiers</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-gray-300">
-                      {[
-                        'Running',
-                        'Cycling',
-                        'Weight Holding',
-                        'Dumbbell Holding',
-                        'Plank',
-                      ].map((optName, i) => {
-                        const evSlots = (event as any)?.audition_slots || {};
-                        const filled = evSlots[optName]?.filled ?? 0;
-                        const capacity = 100;
-                        const remaining = Math.max(0, capacity - filled);
-                        return (
-                          <tr key={i} className="hover:bg-white/5 transition-colors">
-                            <td className="px-5 py-3.5 font-bold text-white uppercase">{optName}</td>
-                            <td className="px-5 py-3.5 text-center font-mono">{capacity}</td>
-                            <td className="px-5 py-3.5 text-center font-mono font-bold text-amber-400">{filled}</td>
-                            <td className="px-5 py-3.5 text-center font-mono font-bold text-gold-premium">{remaining}</td>
-                            <td className="px-5 py-3.5 text-center font-mono font-bold text-white">Top 20</td>
+                {(() => {
+                  const evSlots = (event as any)?.audition_slots || {};
+                  const disciplines = ['Running', 'Cycling', 'Weight Holding', 'Dumbbell Holding', 'Plank'];
+                  const totalCapacity = disciplines.reduce((acc, name) => acc + (evSlots[name]?.capacity ?? 100), 0);
+                  const totalFilled = disciplines.reduce((acc, name) => acc + (evSlots[name]?.filled ?? 0), 0);
+                  const totalRemaining = Math.max(0, totalCapacity - totalFilled);
+
+                  return (
+                    <div className="overflow-x-auto border border-white/10 rounded-xl">
+                      <table className="w-full text-sm text-left font-barlow">
+                        <thead className="bg-black/50 text-[11px] font-bold uppercase tracking-wider text-gray-400 border-b border-white/10">
+                          <tr>
+                            <th className="px-5 py-3">Audition Option</th>
+                            {showNumbers && <th className="px-5 py-3 text-center">Capacity</th>}
+                            {showNumbers && <th className="px-5 py-3 text-center">Slots Filled</th>}
+                            {showNumbers && <th className="px-5 py-3 text-center">Remaining</th>}
+                            <th className="px-5 py-3 text-center">Qualifiers</th>
                           </tr>
-                        );
-                      })}
-                      <tr className="bg-gold-premium/10 font-bold text-white font-bebas text-lg tracking-wider border-t-2 border-gold-premium/40">
-                        <td className="px-5 py-4 uppercase">Total</td>
-                        <td className="px-5 py-4 text-center font-mono">500</td>
-                        <td className="px-5 py-4 text-center font-mono text-amber-400">
-                          {Object.values((event as any)?.audition_slots || {}).reduce((acc: number, cur: any) => acc + (cur?.filled || 0), 0)}
-                        </td>
-                        <td className="px-5 py-4 text-center font-mono text-gold-premium">
-                          {500 - Object.values((event as any)?.audition_slots || {}).reduce((acc: number, cur: any) => acc + (cur?.filled || 0), 0)}
-                        </td>
-                        <td className="px-5 py-4 text-center font-mono text-gold-premium text-xl">100</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-gray-300">
+                          {disciplines.map((optName, i) => {
+                            const capacity = evSlots[optName]?.capacity ?? 100;
+                            const filled = evSlots[optName]?.filled ?? 0;
+                            const remaining = Math.max(0, capacity - filled);
+                            return (
+                              <tr key={i} className="hover:bg-white/5 transition-colors">
+                                <td className="px-5 py-3.5 font-bold text-white uppercase">{optName}</td>
+                                {showNumbers && <td className="px-5 py-3.5 text-center font-mono">{capacity}</td>}
+                                {showNumbers && <td className="px-5 py-3.5 text-center font-mono font-bold text-amber-400">{filled}</td>}
+                                {showNumbers && <td className="px-5 py-3.5 text-center font-mono font-bold text-gold-premium">{remaining}</td>}
+                                <td className="px-5 py-3.5 text-center font-mono font-bold text-white">Top 20</td>
+                              </tr>
+                            );
+                          })}
+                          {showNumbers && (
+                            <tr className="bg-gold-premium/10 font-bold text-white font-bebas text-lg tracking-wider border-t-2 border-gold-premium/40">
+                              <td className="px-5 py-4 uppercase">Total</td>
+                              <td className="px-5 py-4 text-center font-mono">{totalCapacity}</td>
+                              <td className="px-5 py-4 text-center font-mono text-amber-400">{totalFilled}</td>
+                              <td className="px-5 py-4 text-center font-mono text-gold-premium">{totalRemaining}</td>
+                              <td className="px-5 py-4 text-center font-mono text-gold-premium text-xl">100</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
 
                 {/* Reference Infographic Image Display 1 */}
                 <div className="relative w-full h-[220px] sm:h-[350px] rounded-xl overflow-hidden border border-white/10">
@@ -285,8 +286,8 @@ export default async function EventDetailsPage({ params }: PageProps) {
                   ].map((item, idx) => {
                     const Icon = item.icon;
                     const evSlots = (event as any)?.audition_slots || {};
+                    const capacity = evSlots[item.title]?.capacity ?? 100;
                     const filled = evSlots[item.title]?.filled ?? 0;
-                    const capacity = 100;
                     const remaining = Math.max(0, capacity - filled);
                     return (
                       <div
@@ -297,15 +298,25 @@ export default async function EventDetailsPage({ params }: PageProps) {
                           <div className="p-2 rounded-lg bg-gold-premium/10 border border-gold-premium/20 text-gold-premium">
                             <Icon className="w-5 h-5" />
                           </div>
-                          <span className="text-[10px] font-barlow uppercase font-bold text-gold-premium bg-gold-premium/10 border border-gold-premium/30 px-2 py-0.5 rounded">
-                            {remaining} Spots Left
-                          </span>
+                          {showNumbers ? (
+                            <span className="text-[10px] font-barlow uppercase font-bold text-gold-premium bg-gold-premium/10 border border-gold-premium/30 px-2 py-0.5 rounded">
+                              {remaining} Spots Left
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-barlow uppercase font-bold text-gray-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
+                              {item.badge}
+                            </span>
+                          )}
                         </div>
                         <h4 className="font-bebas text-xl text-white uppercase group-hover:text-gold-premium transition-colors">
                           {item.title}
                         </h4>
                         <div className="text-xs font-barlow text-gray-400 uppercase mt-1 flex justify-between">
-                          <span>Filled: <strong className="text-white">{filled}</strong> / 100</span>
+                          {showNumbers ? (
+                            <span>Filled: <strong className="text-white">{filled}</strong> / {capacity}</span>
+                          ) : (
+                            <span className="text-gray-400">{item.badge}</span>
+                          )}
                           <span className="text-gold-glow">Top 20 Qualify</span>
                         </div>
                       </div>
